@@ -1,0 +1,34 @@
+{
+  "accounts": [
+    {
+      "account_id": "ACE_PLB_001",
+      "company_name": "ACE Plumbing & HVAC",
+      "demo_file": "demo_001.txt",
+      "onboarding_file": "onboarding_001.txt"
+    },
+    {
+      "account_id": "BRH_002",
+      "company_name": "Blue Ridge Heating & Air",
+      "demo_file": "demo_002.txt",
+      "onboarding_file": "onboarding_002.txt"
+    },
+    {
+      "account_id": "SES_003",
+      "company_name": "Sunrise Electrical Services",
+      "demo_file": "demo_003.txt",
+      "onboarding_file": "onboarding_003.txt"
+    },
+    {
+      "account_id": "MPH_004",
+      "company_name": "Mountain Peak HVAC",
+      "demo_file": "demo_004.txt",
+      "onboarding_file": "onboarding_004.txt"
+    },
+    {
+      "account_id": "CCS_005",
+      "company_name": "Coastal Comfort Systems",
+      "demo_file": "demo_005.txt",
+      "onboarding_file": "onboarding_005.txt"
+    }
+  ]
+}

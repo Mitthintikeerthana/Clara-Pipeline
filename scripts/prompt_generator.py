@@ -1,0 +1,350 @@
+"""
+Account Memo -> Retell Agent Spec (v1 / v2).
+
+Generates:
+  - A human-readable system prompt for the Retell LLM agent
+  - A full agent_spec JSON that mirrors the Retell API create-agent payload
+
+The spec is valid for manual import into the Retell UI or, when a Retell API
+key is present, can be submitted directly via the Retell REST API.
+"""
+
+from __future__ import annotations
+
+import logging
+from datetime import datetime, timezone
+from typing import Any
+
+logger = logging.getLogger(__name__)
+
+
+# -- Helpers -------------------------------------------------------------------
+
+def _fmt_days(days: list[str]) -> str:
+    if not days:
+        return "Monday-Friday"
+    if len(days) == 1:
+        return days[0]
+    return ", ".join(days[:-1]) + " and " + days[-1]
+
+
+def _fmt_hours(memo: dict) -> str:
+    bh = memo.get("business_hours", {})
+    days = _fmt_days(bh.get("days", []))
+    start = bh.get("start", "8:00")
+    end = bh.get("end", "17:00")
+    tz = bh.get("timezone", "")
+    tz_label = tz.split("/")[-1].replace("_", " ") if "/" in tz else tz
+    return f"{days}, {start}-{end} {tz_label}".strip()
+
+
+def _fmt_emergency_contacts(contacts: list[dict]) -> str:
+    if not contacts:
+        return "  (no emergency contacts on file)"
+    lines = []
+    for c in sorted(contacts, key=lambda x: x.get("order", 99)):
+        lines.append(f"  {c.get('order', '?')}. {c.get('name', 'Unknown')} - {c.get('phone', 'no phone')}")
+    return "\n".join(lines)
+
+
+def _fmt_services(services: list[str]) -> str:
+    return "\n".join(f"  - {s}" for s in services) if services else "  (see office for details)"
+
+
+def _fmt_emergency_triggers(triggers: list[str]) -> str:
+    return "\n".join(f"  - {t}" for t in triggers) if triggers else "  (consult with dispatch)"
+
+
+def _fmt_constraints(constraints: list[str]) -> str:
+    return "\n".join(f"  - {c}" for c in constraints) if constraints else ""
+
+
+# -- System prompt builder ------------------------------------------------------
+
+_SYSTEM_PROMPT_TEMPLATE = """\
+# IDENTITY
+You are Clara, a professional AI phone answering agent for {company_name}.
+You are friendly, concise, and efficient. You never reveal that you are AI unless
+directly asked; if asked, you confirm you are an AI assistant.
+You never mention "function calls", "tools", "APIs", or any technical processes.
+
+# BUSINESS INFORMATION
+Company: {company_name}
+Address: {address}
+Business Hours: {hours_formatted}
+
+# SERVICES WE OFFER
+{services_formatted}
+
+# WHAT WE DO NOT OFFER / OPERATIONAL RULES
+{constraints_formatted}
+
+---
+# DURING BUSINESS HOURS FLOW
+
+When the office is open:
+
+1. GREET
+   "Thank you for calling {company_name}, this is Clara speaking. How can I help you today?"
+
+2. LISTEN & IDENTIFY NEED
+   - Understand what the caller needs (service request, appointment, question, emergency, etc.).
+   - If they ask about something we don't offer, politely inform them and offer to take a message.
+
+3. COLLECT CALLER INFO
+   - "May I have your full name, please?"
+   - "And the best phone number to reach you?"
+   - For service requests also ask: "What's the service address?" and a brief description of the issue.
+
+4. TRANSFER
+   - "Let me connect you with our team. Please hold for just a moment."
+   - Attempt transfer to: {during_hours_primary}
+   - If no answer after {timeout_rings} rings: proceed to step 5.
+
+5. TRANSFER FAIL PROTOCOL
+   - "I wasn't able to connect you right now, but I've captured all your details."
+   - "Someone from our team will call you back within the hour. Is that okay?"
+   - Confirm their callback number.
+
+6. WRAP UP
+   - "Is there anything else I can help you with today?"
+   - "Thank you for calling {company_name}. Have a great day!"
+
+---
+# AFTER HOURS FLOW
+
+When the office is closed:
+
+1. GREET
+   "Thank you for calling {company_name}. Our office is currently closed - our normal hours
+   are {hours_formatted}. This is Clara, the after-hours answering service."
+
+2. CHECK FOR EMERGENCY
+   "Are you experiencing an emergency that needs immediate attention tonight?"
+
+3A. IF EMERGENCY - Collect info FIRST, then transfer:
+   - "I'm going to connect you with our on-call team right away."
+   - Immediately collect: "Can I get your full name?", "Best callback number?", "Service address?"
+   - "Thank you. I'm connecting you now - please stay on the line."
+   - Attempt emergency transfer in order:
+{emergency_contacts_formatted}
+   - If transfer succeeds: stay on hold, confirm handoff.
+   - If ALL transfers fail:
+     "{transfer_fail_message}"
+     "I have sent an urgent alert to our on-call team with your information.
+      Someone will call you back within 15 minutes.
+      If this is a life-threatening emergency, please call 9-1-1 immediately."
+
+3B. IF NON-EMERGENCY:
+   - "Our office opens {next_open_hint}. I can take a message for a callback."
+   - Collect: full name, best callback number, brief description of the issue.
+   - "Perfect. Someone will call you back first thing in the morning."
+
+4. WRAP UP
+   "Is there anything else I can help you with tonight?"
+   "Thank you for calling {company_name}. Stay safe and have a good night."
+
+---
+# EMERGENCY TRIGGERS
+The following situations ALWAYS qualify as emergencies requiring immediate escalation:
+{emergency_triggers_formatted}
+
+# AFTER HOURS NON-EMERGENCY RULE
+{non_emergency_after_hours}
+
+# IMPORTANT REMINDERS
+- Never promise a specific arrival time unless explicitly authorized.
+- Never quote prices.
+- Never create job records yourself - only collect information.
+- Do not mention the names of specific technicians.
+- Always be empathetic with distressed callers.
+- If a caller is abusive, calmly state you are here to help and may need to end the call.
+"""
+
+
+def generate_system_prompt(memo: dict, version: str = "v1") -> str:
+    bh = memo.get("business_hours", {})
+    er = memo.get("emergency_routing_rules", {})
+    ct = memo.get("call_transfer_rules", {})
+    ne = memo.get("non_emergency_routing_rules", {})
+    constraints = memo.get("integration_constraints", [])
+
+    # Excluded services note
+    constraints_text = _fmt_constraints(constraints)
+    if not constraints_text:
+        constraints_text = "  (no specific constraints on file - use good judgment)"
+
+    # Transfer fail message
+    company = memo.get("company_name", "our company")
+    fallback = er.get("fallback", "")
+    if not fallback:
+        fallback = f"I was unable to reach our on-call team."
+
+    prompt = _SYSTEM_PROMPT_TEMPLATE.format(
+        company_name=company,
+        address=memo.get("office_address", "(address on file)"),
+        hours_formatted=_fmt_hours(memo),
+        services_formatted=_fmt_services(memo.get("services_supported", [])),
+        constraints_formatted=constraints_text,
+        during_hours_primary=ct.get("during_hours_primary", "(office main line)"),
+        timeout_rings=ct.get("timeout_rings", 4),
+        emergency_contacts_formatted=_fmt_emergency_contacts(er.get("contacts", [])),
+        transfer_fail_message=fallback,
+        emergency_triggers_formatted=_fmt_emergency_triggers(memo.get("emergency_definition", [])),
+        non_emergency_after_hours=ne.get(
+            "after_hours",
+            "Take message with name, number, and issue. Promise next-day callback.",
+        ),
+        next_open_hint="our next business day",
+    )
+
+    if version == "v2":
+        prompt = f"# VERSION: v2 (updated after onboarding)\n\n{prompt}"
+
+    return prompt.strip()
+
+
+# -- Retell agent spec builder --------------------------------------------------
+
+# Retell voices available on free tier (as of 2025)
+_DEFAULT_VOICE = "openai-Alloy"
+
+_RECOMMENDED_VOICES = {
+    "professional_female": "openai-Nova",
+    "professional_male": "openai-Onyx",
+    "friendly_female": "openai-Alloy",
+    "friendly_male": "openai-Echo",
+}
+
+
+def generate_agent_spec(memo: dict, version: str = "v1") -> dict:
+    """
+    Build a Retell Agent Draft Spec JSON.
+
+    This mirrors the Retell `POST /create-agent` API body.
+    If you have a Retell API key, pass this to `retell_client.create_or_update_agent()`.
+    Otherwise, paste the `system_prompt` field manually into the Retell UI.
+    """
+    system_prompt = generate_system_prompt(memo, version=version)
+    bh = memo.get("business_hours", {})
+    er = memo.get("emergency_routing_rules", {})
+    ct = memo.get("call_transfer_rules", {})
+    company = memo.get("company_name", "Unknown Company")
+
+    agent_name = f"{company} - Clara ({version.upper()})"
+
+    spec: dict[str, Any] = {
+        # -- Identity ----------------------------------------------------------
+        "agent_name": agent_name,
+        "version": version,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+
+        # -- LLM configuration -------------------------------------------------
+        "response_engine": {
+            "type": "retell-llm",
+            "model": "gpt-4o-mini",          # Free-tier compatible model
+            "system_prompt": system_prompt,
+            "temperature": 0.3,              # Low temp for consistent, predictable responses
+        },
+
+        # -- Voice -------------------------------------------------------------
+        "voice_id": _DEFAULT_VOICE,
+        "voice_speed": 1.0,
+        "voice_temperature": 0.7,
+        "language": "en-US",
+
+        # -- Call behaviour ----------------------------------------------------
+        "begin_message": f"Thank you for calling {company}, this is Clara speaking. How can I help you today?",
+        "max_call_duration_sec": 600,        # 10 minutes
+        "boosted_keywords": [
+            company.split()[0],
+            "emergency",
+            "urgent",
+            "transfer",
+        ],
+
+        # -- Key variables (substituted at call time) --------------------------
+        "key_variables": {
+            "company_name": company,
+            "timezone": bh.get("timezone", ""),
+            "business_hours_start": bh.get("start", ""),
+            "business_hours_end": bh.get("end", ""),
+            "business_days": ", ".join(bh.get("days", [])),
+            "office_address": memo.get("office_address", ""),
+            "emergency_primary_phone": (
+                er["contacts"][0]["phone"] if er.get("contacts") else ""
+            ),
+            "emergency_secondary_phone": (
+                er["contacts"][1]["phone"] if len(er.get("contacts", [])) > 1 else ""
+            ),
+            "daytime_transfer_number": ct.get("during_hours_primary", ""),
+        },
+
+        # -- Tool invocation placeholders --------------------------------------
+        # NOTE: Tool names are NEVER revealed to the caller.
+        "tool_invocation_placeholders": [
+            {
+                "tool_name": "transfer_call",
+                "description": "Transfer the active call to the specified phone number.",
+                "parameters": {
+                    "destination_phone": "string",
+                    "caller_name": "string",
+                    "caller_phone": "string",
+                    "issue_summary": "string",
+                },
+            },
+            {
+                "tool_name": "create_voicemail_note",
+                "description": "Log caller info for callback when transfer fails.",
+                "parameters": {
+                    "caller_name": "string",
+                    "caller_phone": "string",
+                    "service_address": "string",
+                    "issue_description": "string",
+                    "priority": "normal|urgent",
+                },
+            },
+        ],
+
+        # -- Transfer protocol -------------------------------------------------
+        "call_transfer_protocol": {
+            "during_hours": {
+                "primary_number": ct.get("during_hours_primary", ""),
+                "timeout_rings": ct.get("timeout_rings", 4),
+                "retries": ct.get("retries", 1),
+                "on_fail": ct.get(
+                    "on_transfer_fail",
+                    "Take message and promise callback within one hour.",
+                ),
+            },
+            "emergency_after_hours": {
+                "contacts": er.get("contacts", []),
+                "attempt_each_contact": True,
+                "on_all_fail": er.get(
+                    "fallback",
+                    "Advise caller that on-call team has been alerted. ETA 15 minutes. 911 for life-threatening.",
+                ),
+            },
+        },
+
+        # -- Fallback protocol -------------------------------------------------
+        "fallback_protocol": {
+            "max_transfer_attempts": len(er.get("contacts", [])) or 2,
+            "message_if_all_fail": (
+                "I was unable to connect you right now. Your information has been "
+                "logged and our team will call you back as soon as possible."
+            ),
+            "send_sms_alert": False,        # Enable in production
+        },
+    }
+
+    return spec
+
+
+# -- Public entry point ---------------------------------------------------------
+
+def build_all_outputs(memo: dict, version: str = "v1") -> dict:
+    """Return both system_prompt and full agent_spec for a memo."""
+    prompt = generate_system_prompt(memo, version=version)
+    spec = generate_agent_spec(memo, version=version)
+    return {"system_prompt": prompt, "agent_spec": spec}

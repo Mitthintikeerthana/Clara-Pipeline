@@ -1,0 +1,66 @@
+CLARA DEMO CALL TRANSCRIPT
+Account: MPH_004
+Date: 2025-01-22
+Participants: Riley Nguyen (Clara Sales), Jake Hoffman (Owner, Mountain Peak HVAC)
+
+---
+
+Riley: Hi Jake, thanks for joining. I'm Riley from Clara. Tell me about Mountain Peak HVAC.
+
+Jake: Hey Riley. So I'm Jake Hoffman, I started Mountain Peak HVAC about six years ago. We're based in Denver, Colorado. We do a mix of residential and commercial HVAC — furnaces, boilers, air conditioning, ductless mini-splits. Denver has pretty extreme seasons so we stay pretty busy year-round.
+
+Riley: I bet. What are your operating hours?
+
+Jake: Monday through Saturday, eight AM to six PM, Mountain Time. Closed Sundays.
+
+Riley: Do you handle after-hours emergencies?
+
+Jake: Absolutely. Can't really avoid it in a market like Denver — when a furnace goes out in January at minus ten, that's a life-safety issue.
+
+Riley: What do you define as an emergency?
+
+Jake: No heat when it's below twenty degrees Fahrenheit outside. No AC when it's above ninety-five. Boiler failure — especially for commercial clients who have buildings full of people. Carbon monoxide alarm triggered. And complete system failure for any commercial client during operating hours — if a restaurant or office loses their HVAC we treat that as urgent.
+
+Riley: For emergency routing after hours, who do we contact?
+
+Jake: Call me first — Jake Hoffman — my cell is 720-555-0156. If I don't pick up, call Lisa Chen, she's my operations manager, at 720-555-0178. We both need to be tried before telling the customer there will be a delay. We really try hard not to drop the ball on emergencies.
+
+Riley: What happens if both of you are unreachable?
+
+Jake: Tell the customer we've alerted our emergency team and someone will call within twenty minutes. Then leave voicemail and text both of us.
+
+Riley: For non-emergency after-hours?
+
+Jake: Standard message taking. Name, number, quick description. We'll follow up first thing next morning.
+
+Riley: During business hours?
+
+Jake: Main office line is 720-555-0100. Try that first. If nobody picks up after four rings, take a message — we check voicemail every thirty minutes.
+
+Riley: What field service software do you use?
+
+Jake: FieldEdge. We use it for scheduling, dispatch, and invoicing. It's pretty well integrated with how we work.
+
+Riley: Any constraints on FieldEdge?
+
+Jake: Nothing too unusual. Just make sure job types are accurate — residential versus commercial makes a big difference for us in FieldEdge. Oh, and never suggest we do window units or portable AC units — we get calls for that, and we just send people to a hardware store. That's not our business.
+
+Riley: Noted. Your office address?
+
+Jake: Three-three-zero-zero Quebec Street, Suite one-forty, Denver, Colorado, eight-zero-two-zero-seven.
+
+Riley: Services offered?
+
+Jake: Heating repair, AC repair, boiler repair and installation, ductless mini-split installation and service, geothermal system service, furnace replacement, preventive maintenance agreements.
+
+Riley: Anything you explicitly don't handle besides window units?
+
+Jake: No portable ACs, no window units, no appliance repair. And we don't do duct cleaning — we partner with a specialist for that and refer them out.
+
+Riley: Great. Anything else?
+
+Jake: One thing — if a commercial client calls and says it's a heating emergency, give that priority even during business hours. I want those escalated immediately and not just put in a queue.
+
+Riley: I'll make sure the agent flags commercial heating emergencies for immediate escalation. Thanks Jake, we'll have a draft to you soon.
+
+Jake: Thanks Riley.

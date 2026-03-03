@@ -1,0 +1,58 @@
+CLARA DEMO CALL TRANSCRIPT
+Account: SES_003
+Date: 2025-01-20
+Participants: Jordan Kim (Clara Sales), Carlos Mendez (Owner, Sunrise Electrical Services)
+
+---
+
+Jordan: Hi Carlos, great to connect with you. I'm Jordan from Clara. Tell me about Sunrise Electrical Services.
+
+Carlos: Sure. I'm Carlos Mendez, I founded Sunrise Electrical about eight years ago. We're based in Miami, Florida. We do residential and commercial electrical work — everything from panel upgrades to smart home wiring. Mostly in Miami-Dade County, though we do some work in Broward too on occasion.
+
+Jordan: And what are your business hours?
+
+Carlos: Monday through Friday, seven-thirty AM to five-thirty PM, Eastern Time. We're closed weekends for routine work. We do maintain an emergency line though.
+
+Jordan: What counts as an emergency for an electrical company?
+
+Carlos: Power outage traced to the main panel — we want to know about that. Sparking wires, burning smell, anything that suggests an active electrical fire. Exposed wires that are a hazard, especially in homes with kids. A breaker panel that trips and won't reset. Loss of power to critical medical equipment in a home. Those are all things we want called in right away, any time of day.
+
+Jordan: And who gets called when an emergency comes in after hours?
+
+Carlos: First you call Tony Ricci, he's our senior field tech. Number is 305-555-0144. If Tony doesn't pick up, you call me — Carlos Mendez — at 305-555-0177. If I don't answer either, leave voicemail for both of us and text me too, and tell the customer we'll have someone call back within fifteen minutes. We take that promise seriously.
+
+Jordan: And non-emergency calls after hours?
+
+Carlos: Take their name, phone number, and a quick description of what's going on. Let them know we'll follow up next business day. Don't promise a same-day anything.
+
+Jordan: During business hours, how should we route?
+
+Carlos: Transfer to our dispatcher, Maria Santos. Her direct line is 305-555-0100. If she's tied up, try 305-555-0101 — that's our secondary dispatcher line. If nobody picks up after about four rings on each, take a message.
+
+Jordan: What software do you use for job scheduling?
+
+Carlos: Housecall Pro. We've been on it for three years. When jobs get created, make sure it's clear it's residential or commercial in the notes. We've had confusion before.
+
+Jordan: Any constraints on what jobs get booked through Housecall Pro?
+
+Carlos: Yeah — don't book jobs in Broward County without running it by me first. We're based in Miami-Dade, and Broward jobs have to be approved because of travel time and crew availability. Also, commercial panel upgrades are a special category — those should never be auto-booked. I need to scope those personally before we commit.
+
+Jordan: Understood. What's your office address?
+
+Carlos: One-eight-five-zero NW Seventy-ninth Street, Miami, Florida, three-three-one-four-seven.
+
+Jordan: Services offered?
+
+Carlos: Residential and commercial electrical, panel upgrades and replacements, EV charger installation, generator hookups and transfer switches, smart home wiring, ceiling fans and lighting, troubleshooting and diagnostics.
+
+Jordan: Anything you don't do?
+
+Carlos: We don't do low-voltage network cabling — like structured wiring for ethernet. We get calls for that but it's a different specialty. Also no solar panel installation, even though people assume we do that.
+
+Jordan: Good to know. How should the agent handle calls where people ask about pricing?
+
+Carlos: Tell them we're not able to quote over the phone, but a team member will call them back and can give them an accurate estimate. Don't give any price ranges — it always comes back to bite us.
+
+Jordan: Perfect. I think we've got everything. I'll put together a draft configuration and send it over. Thanks Carlos.
+
+Carlos: Perfect, appreciate it Jordan.

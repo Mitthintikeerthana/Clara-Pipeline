@@ -1,0 +1,72 @@
+CLARA ONBOARDING CALL TRANSCRIPT
+Account: SES_003
+Date: 2025-02-07
+Participants: Jordan Kim (Clara Onboarding), Carlos Mendez (Owner, Sunrise Electrical Services)
+
+---
+
+Jordan: Hi Carlos, glad to connect for the onboarding call. I have your configuration from the demo ready to review.
+
+Carlos: Great. I actually have some pretty significant updates. Things moved quickly since our demo call.
+
+Jordan: No problem at all, that's what this call is for. Let me start from the top. Business hours — Monday through Friday, seven-thirty to five-thirty, Eastern Time?
+
+Carlos: That's still correct.
+
+Jordan: Emergency contacts — Tony Ricci primary at 305-555-0144, then you at 305-555-0177.
+
+Carlos: So Tony is actually on paternity leave. He'll be out for about eight weeks starting this week. His replacement as emergency contact during that period is Sandra Lee. Sandra's cell is 305-555-0199. She's our other senior tech.
+
+Jordan: Understood. So for the next eight weeks, Sandra Lee at 305-555-0199 is the primary emergency contact in place of Tony. And you, Carlos, at 305-555-0177 stay as the secondary?
+
+Carlos: Exactly. After eight weeks Tony comes back and goes back to primary. Can we set a reminder for that?
+
+Jordan: I'll flag this in the account notes with a return date so your account manager knows to reach out and confirm when Tony is back. We'll do a quick update at that point.
+
+Carlos: Perfect.
+
+Jordan: ServiceTrade constraints — we had "don't book jobs in Broward County without your approval" and "don't auto-book commercial panel upgrades."
+
+Carlos: The Broward County constraint is changing. We've officially expanded our service area to include all of Broward County. So that restriction is lifted — Broward County is now fully in our service area.
+
+Jordan: Great. Removing the Broward County restriction. We now serve Miami-Dade and Broward County.
+
+Carlos: Correct.
+
+Jordan: The commercial panel upgrade constraint — still needs your approval?
+
+Carlos: Yes, that one stays. Never book commercial panel upgrades without my review. I need to scope those personally.
+
+Jordan: Got it. Staying in. Any new constraints?
+
+Carlos: Yes. New one — we don't take jobs with a scope of work valued under two hundred dollars. We've had issues with very small jobs that aren't worth the dispatch cost. So if a caller describes something trivial — like "I need one outlet replaced" — the agent should let them know we have a minimum service call value and take their number so we can assess.
+
+Jordan: I'll add: minimum service call — do not commit to jobs clearly under two hundred dollars in scope. Collect info and advise a team member will call to assess.
+
+Carlos: Perfect wording.
+
+Jordan: During-hours routing — Maria Santos at 305-555-0100, secondary 305-555-0101. Still the same?
+
+Carlos: Still the same.
+
+Jordan: Services — we had residential and commercial electrical, panel upgrades, EV charger installation, generator hookups, smart home wiring, ceiling fans and lighting. Any changes?
+
+Carlos: Add commercial lighting retrofits. We've been doing LED retrofit projects for small office buildings and restaurants. That's a significant part of our revenue now. Also add electrical inspections and permits — we handle permit pulls for renovation projects.
+
+Jordan: Adding commercial lighting retrofits and electrical inspections and permits processing. Got it.
+
+Jordan: Things you don't do — no low-voltage network cabling, no solar installation. Still correct?
+
+Carlos: Still correct. Though I want to add one more — no panel upgrades for manufactured homes. That's a specialty we're not trained for and it's a liability issue.
+
+Jordan: Adding: no panel upgrades for manufactured homes. Done.
+
+Jordan: Anything else?
+
+Carlos: I think that covers it. The Sandra Lee update is urgent — please make sure that's live before end of day today if possible.
+
+Jordan: I'll flag it as urgent in the system. Your account will be updated within the hour. We'll send you a confirmation.
+
+Carlos: Perfect. Thanks Jordan.
+
+Jordan: Thank you Carlos. Looking forward to supporting Sunrise Electrical.

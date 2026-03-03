@@ -1,0 +1,58 @@
+CLARA DEMO CALL TRANSCRIPT
+Account: BRH_002
+Date: 2025-01-16
+Participants: Alex Rivera (Clara Sales), Patricia Holloway (Owner, Blue Ridge Heating & Air)
+
+---
+
+Alex: Hi Patricia, thanks for taking the call today. I'm Alex from Clara. Could you start by telling me a little about your business?
+
+Patricia: Of course. I'm Patricia Holloway, I own Blue Ridge Heating & Air here in Charlotte, North Carolina. We've been in business for going on eighteen years. We focus on residential and light commercial HVAC — heating, air conditioning, maintenance agreements, that sort of thing.
+
+Alex: Wonderful. And what are your regular operating hours?
+
+Patricia: Monday through Friday, eight to five, Eastern Time. We used to do Saturday but we phased that out a couple years back. Our team was burning out.
+
+Alex: Totally understandable. Do you have any after-hours or emergency coverage?
+
+Patricia: Yes. We cover emergencies around the clock. Regular non-emergency calls we let go to voicemail after five and follow up next morning.
+
+Alex: What qualifies as an emergency in your world?
+
+Patricia: Let's see — no heat when it's below forty degrees outside, that's the big one in winter. No AC when it's above ninety in summer. Carbon monoxide detector alarm going off, obviously. Total system failure for an elderly customer or someone with a medical condition. And flooding from HVAC condensate — that's a sneaky one people don't think of, but we get calls for it.
+
+Alex: Those are great specifics. For emergency routing after hours, who do we call?
+
+Patricia: First we try Brandon Walsh, he's our lead tech for emergencies. His number is 704-555-0231. If Brandon doesn't answer, we call our backup, Angela Reeves, at 704-555-0267. If both of them fail to respond within five minutes of the first call, send me a text at 704-555-0190 and tell the customer we'll have someone call within fifteen minutes.
+
+Alex: Got it. And for non-emergency after-hours calls?
+
+Patricia: Collect their name, number, and a brief description of the issue. Tell them we'll follow up next business day. Do not offer a same-day commitment.
+
+Alex: What about during business hours — how should calls be routed?
+
+Patricia: Transfer to our main office line, 704-555-0200. If no one picks up after four or five rings, take a message — name, best number, and the issue — and we'll call back within the hour.
+
+Alex: Do you use any field service or CRM software?
+
+Patricia: We're on ServiceTitan. We're pretty deep into it. When calls result in a job being created, I want it accurately marked as residential or commercial — that matters for our reporting. Also, we do not do new construction under any circumstances. If someone calls looking for new-construction HVAC work, politely let them know we only service existing systems.
+
+Alex: Understood. What's your office address?
+
+Patricia: Eight-twelve Tyvola Road, Charlotte, North Carolina, two-eight-two-one-seven.
+
+Alex: And the full list of services you offer?
+
+Patricia: Heating repair and installation, air conditioning repair and installation, maintenance agreements, system replacements, indoor air quality solutions — air purifiers, humidifiers, that kind of thing — and duct cleaning.
+
+Alex: And anything you definitely don't offer besides new construction?
+
+Patricia: No commercial refrigeration, no chiller systems, no industrial work. We get occasional calls for those and it's always a mismatch.
+
+Alex: Got it. Any final notes or preferences for how the AI should handle calls?
+
+Patricia: I just want it to feel professional and not robotic. We've built a lot of trust with our customers over eighteen years and I don't want that feeling to disappear because of an AI.
+
+Alex: That's exactly our focus. The agent will be warm, efficient, and always leave the caller feeling taken care of. I'll get a draft configuration over to you this week, Patricia.
+
+Patricia: Thank you, Alex. I appreciate it.

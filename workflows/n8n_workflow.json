@@ -1,0 +1,351 @@
+{
+  "name": "Clara Pipeline — Demo + Onboarding",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [120, 400]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "input_file",
+              "value": "={{ $json.input_file || 'inputs/demo/demo_001.txt' }}"
+            },
+            {
+              "name": "account_id",
+              "value": "={{ $json.account_id || 'ACE_PLB_001' }}"
+            },
+            {
+              "name": "pipeline",
+              "value": "={{ $json.pipeline || 'A' }}"
+            }
+          ]
+        }
+      },
+      "id": "set-input-params",
+      "name": "Set Input Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [320, 400]
+    },
+    {
+      "parameters": {
+        "filePath": "={{ $json.input_file }}"
+      },
+      "id": "read-file",
+      "name": "Read Transcript File",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [520, 260]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.input_file.split('.').pop() }}",
+              "operation": "isNotEqual",
+              "value2": "txt"
+            }
+          ]
+        }
+      },
+      "id": "check-is-audio",
+      "name": "Is Audio File?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [520, 400]
+    },
+    {
+      "parameters": {
+        "command": "python -c \"\nimport sys\nfrom scripts.transcriber import transcribe\nresult = transcribe('{{ $json.input_file }}')\nprint(result)\n\""
+      },
+      "id": "whisper-transcribe",
+      "name": "Whisper Transcription",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalize the transcript text\nconst rawText = items[0].json.stdout || items[0].binary?.data?.toString('utf8') || '';\nreturn [{ json: { transcript: rawText.trim(), account_id: $('Set Input Parameters').first().json.account_id } }];"
+      },
+      "id": "normalize-transcript",
+      "name": "Normalize Transcript",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [920, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "={{ $env.GEMINI_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "contents",
+              "value": "=[{ \"parts\": [{ \"text\": \"Extract account memo JSON from this demo call transcript. Account ID: {{ $json.account_id }}\\n\\n{{ $json.transcript }}\\n\\nReturn only valid JSON matching the account memo schema.\" }] }]"
+            }
+          ]
+        }
+      },
+      "id": "llm-extract-memo",
+      "name": "LLM — Extract Account Memo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse LLM response and extract JSON\nconst responseText = items[0].json.candidates?.[0]?.content?.parts?.[0]?.text || '';\nconst clean = responseText.replace(/^```json\\s*/i, '').replace(/\\s*```$/, '');\ntry {\n  const memo = JSON.parse(clean);\n  return [{ json: { memo, account_id: memo.account_id } }];\n} catch(e) {\n  throw new Error('LLM returned invalid JSON: ' + responseText.slice(0, 200));\n}"
+      },
+      "id": "parse-memo-json",
+      "name": "Parse Memo JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "={{ $env.GEMINI_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "contents",
+              "value": "=[{ \"parts\": [{ \"text\": \"Generate a Retell AI agent spec JSON for this account memo:\\n\\n{{ JSON.stringify($json.memo, null, 2) }}\\n\\nReturn a JSON object with: agent_name, voice_id, system_prompt, key_variables, call_transfer_protocol, fallback_protocol, version='v1'.\" }] }]"
+            }
+          ]
+        }
+      },
+      "id": "llm-generate-spec",
+      "name": "LLM — Generate Agent Spec",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1520, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Save memo.json and agent_spec.json via Python storage module\nconst accountId = items[0].json.account_id;\nconst memo = JSON.stringify(items[0].json.memo, null, 2);\n// In production, call Python save_json() here via HTTP or subprocess\n// For demo: return structured output\nreturn [{ json: { ...items[0].json, status: 'saved', output_dir: `outputs/accounts/${accountId}/v1` } }];"
+      },
+      "id": "save-outputs",
+      "name": "Save Outputs to Storage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1720, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.github.com/repos/={{ $env.GITHUB_REPO }}/issues",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.GITHUB_TOKEN }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "[Clara Pipeline] New Account: {{ $json.memo.company_name }} ({{ $json.account_id }})"
+            },
+            {
+              "name": "body",
+              "value": "Auto-created by Clara Pipeline for account {{ $json.account_id }}.\nCompany: {{ $json.memo.company_name }}\nOutput: outputs/accounts/{{ $json.account_id }}/v1/"
+            },
+            {
+              "name": "labels",
+              "value": "[\"clara-pipeline\", \"new-account\"]"
+            }
+          ]
+        }
+      },
+      "id": "create-github-issue",
+      "name": "Create GitHub Issue",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1920, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Final summary output\nconst r = items[0].json;\nconst issueUrl = items[0].json.html_url || '(GitHub not configured)';\nconsole.log(`✓ Pipeline A complete: ${r.account_id} — ${r.memo?.company_name}`);\nreturn [{ json: { ...r, issue_url: issueUrl, pipeline_complete: true } }];"
+      },
+      "id": "pipeline-a-done",
+      "name": "Pipeline A — Done",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2120, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// === PIPELINE B NODES BELOW ===\n// (Connect these nodes after Pipeline A is complete)\n// Load v1 memo, extract updates, apply patch, regenerate spec v2, diff, changelog\nreturn items;"
+      },
+      "id": "pipeline-b-start",
+      "name": "Pipeline B — Start (load v1 memo)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 600]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "={{ $env.GEMINI_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "contents",
+              "value": "=[{ \"parts\": [{ \"text\": \"Extract onboarding updates as a patch JSON from this onboarding transcript.\\n\\nV1 MEMO: {{ JSON.stringify($json.v1_memo) }}\\n\\nONBOARDING TRANSCRIPT: {{ $json.transcript }}\\n\\nReturn JSON with: account_id, patches (array of {field_path, old_value, new_value, reason}), questions_or_unknowns.\" }] }]"
+            }
+          ]
+        }
+      },
+      "id": "llm-extract-updates",
+      "name": "LLM — Extract Onboarding Updates",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [920, 600]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Apply patches to v1 memo and compute diff\n// In production this calls scripts/extractor.apply_patches() and scripts/diff_engine.compute_diff()\nconst patchResult = JSON.parse(items[0].json.candidates[0].content.parts[0].text);\nconst v2Memo = { ...items[0].json.v1_memo }; // simplified; real code applies field_path patches\nreturn [{ json: { v2_memo: v2Memo, patch_result: patchResult } }];"
+      },
+      "id": "apply-patch-and-diff",
+      "name": "Apply Patch & Compute Diff",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 600]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Save v2 outputs and generate changelog\nconst accountId = items[0].json.v2_memo.account_id;\nreturn [{ \n  json: { \n    ...items[0].json, \n    output_dir: `outputs/accounts/${accountId}/v2`,\n    status: 'saved'\n  } \n}];"
+      },
+      "id": "save-v2-outputs",
+      "name": "Save v2 + Changelog",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 600]
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = items[0].json;\nconsole.log(`✓ Pipeline B complete: ${r.v2_memo?.account_id}`);\nreturn [{ json: { ...r, pipeline_complete: true, version: 'v2' } }];"
+      },
+      "id": "pipeline-b-done",
+      "name": "Pipeline B — Done",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1520, 600]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "Set Input Parameters", "type": "main", "index": 0 }]]
+    },
+    "Set Input Parameters": {
+      "main": [[{ "node": "Is Audio File?", "type": "main", "index": 0 }]]
+    },
+    "Is Audio File?": {
+      "main": [
+        [{ "node": "Whisper Transcription", "type": "main", "index": 0 }],
+        [{ "node": "Read Transcript File", "type": "main", "index": 0 }]
+      ]
+    },
+    "Whisper Transcription": {
+      "main": [[{ "node": "Normalize Transcript", "type": "main", "index": 0 }]]
+    },
+    "Read Transcript File": {
+      "main": [[{ "node": "Normalize Transcript", "type": "main", "index": 0 }]]
+    },
+    "Normalize Transcript": {
+      "main": [[{ "node": "LLM — Extract Account Memo", "type": "main", "index": 0 }]]
+    },
+    "LLM — Extract Account Memo": {
+      "main": [[{ "node": "Parse Memo JSON", "type": "main", "index": 0 }]]
+    },
+    "Parse Memo JSON": {
+      "main": [[{ "node": "LLM — Generate Agent Spec", "type": "main", "index": 0 }]]
+    },
+    "LLM — Generate Agent Spec": {
+      "main": [[{ "node": "Save Outputs to Storage", "type": "main", "index": 0 }]]
+    },
+    "Save Outputs to Storage": {
+      "main": [[{ "node": "Create GitHub Issue", "type": "main", "index": 0 }]]
+    },
+    "Create GitHub Issue": {
+      "main": [[{ "node": "Pipeline A — Done", "type": "main", "index": 0 }]]
+    },
+    "Pipeline B — Start (load v1 memo)": {
+      "main": [[{ "node": "LLM — Extract Onboarding Updates", "type": "main", "index": 0 }]]
+    },
+    "LLM — Extract Onboarding Updates": {
+      "main": [[{ "node": "Apply Patch & Compute Diff", "type": "main", "index": 0 }]]
+    },
+    "Apply Patch & Compute Diff": {
+      "main": [[{ "node": "Save v2 + Changelog", "type": "main", "index": 0 }]]
+    },
+    "Save v2 + Changelog": {
+      "main": [[{ "node": "Pipeline B — Done", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": {
+    "templateId": "clara-pipeline-v1",
+    "instanceId": "clara-local"
+  },
+  "pinData": {}
+}

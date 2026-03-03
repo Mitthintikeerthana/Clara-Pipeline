@@ -4,6 +4,7 @@ import argparse
 import json
 import logging
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 from scripts.config import (
@@ -14,6 +15,7 @@ from scripts.config import (
 )
 from scripts.extractor import extract_memo
 from scripts.prompt_generator import build_all_outputs
+from scripts.schema_validator import validate_account_memo, get_completeness_score
 from scripts.task_tracker import create_issue
 from scripts.utils.storage import save_json, save_text
 
@@ -62,6 +64,18 @@ def run_pipeline_a(input_path: str | Path, account_id: str) -> dict:
     logger.info("Extracting account memo…")
     memo = extract_memo(transcript, account_id)
 
+    # Validate the extracted memo
+    logger.info("Validating account memo…")
+    validation = validate_account_memo(memo)
+    completeness = get_completeness_score(memo)
+    
+    if validation.errors:
+        logger.warning("Validation errors: %s", validation.errors)
+    if validation.warnings:
+        logger.warning("Validation warnings: %s", validation.warnings)
+    
+    logger.info("Completeness score: overall=%s", completeness["overall"])
+
     logger.info("Generating Retell agent spec v1…")
     outputs = build_all_outputs(memo, version="v1")
     agent_spec = outputs["agent_spec"]
@@ -82,6 +96,12 @@ def run_pipeline_a(input_path: str | Path, account_id: str) -> dict:
         "version": "v1",
         "input_file": str(input_path),
         "issue_url": issue_url,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "validation": validation.to_dict(),
+        "completeness_score": completeness,
+        "source": memo.get("_metadata", {}).get("_source", "demo"),
+        "confidence_flags": memo.get("_metadata", {}).get("_confidence_flags", {}),
+        "questions_or_unknowns": memo.get("questions_or_unknowns", []),
     }
     save_json(metadata, account_id, "pipeline_meta.json", version="v1")
 
@@ -94,6 +114,8 @@ def run_pipeline_a(input_path: str | Path, account_id: str) -> dict:
         "system_prompt": system_prompt,
         "output_dir": output_dir,
         "issue_url": issue_url,
+        "validation": validation,
+        "completeness_score": completeness,
     }
 
 def _main() -> None:

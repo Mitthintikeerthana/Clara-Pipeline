@@ -3,12 +3,14 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 from scripts.config import AUDIO_EXTENSIONS, CHANGELOG_DIR, LOGS_DIR, TEXT_EXTENSIONS
 from scripts.diff_engine import compute_diff, format_markdown_changelog, generate_changelog
 from scripts.extractor import apply_patches, extract_onboarding_updates
 from scripts.prompt_generator import build_all_outputs
+from scripts.schema_validator import validate_account_memo, get_completeness_score
 from scripts.task_tracker import update_issue
 from scripts.utils.storage import (
     load_json,
@@ -68,6 +70,19 @@ def run_pipeline_b(input_path: str | Path, account_id: str) -> dict:
     v2_memo = apply_patches(v1_memo, patch_result)
     v2_memo["account_id"] = account_id
 
+    # Validate the v2 memo
+    logger.info("Validating v2 account memo…")
+    validation = validate_account_memo(v2_memo)
+    completeness = get_completeness_score(v2_memo)
+    
+    if validation.errors:
+        logger.warning("Validation errors: %s", validation.errors)
+    if validation.warnings:
+        logger.warning("Validation warnings: %s", validation.warnings)
+    
+    logger.info("Completeness score: overall=%s (was demo-derived: %s)", 
+                completeness["overall"], validation.is_demo_derived)
+
     logger.info("Generating Retell agent spec v2…")
     outputs = build_all_outputs(v2_memo, version="v2")
     agent_spec = outputs["agent_spec"]
@@ -75,7 +90,13 @@ def run_pipeline_b(input_path: str | Path, account_id: str) -> dict:
 
     logger.info("Computing diff v1 -> v2…")
     diff = compute_diff(v1_memo, v2_memo)
-    changelog = generate_changelog(account_id, diff, patch_result)
+    changelog = generate_changelog(
+        account_id, 
+        diff, 
+        patch_result,
+        v1_metadata=v1_memo.get("_metadata", {}),
+        v2_metadata=v2_memo.get("_metadata", {}),
+    )
     changelog_md = format_markdown_changelog(changelog)
 
     save_json(v2_memo, account_id, "memo.json", version="v2")
@@ -104,6 +125,12 @@ def run_pipeline_b(input_path: str | Path, account_id: str) -> dict:
         "input_file": str(input_path),
         "issue_url": issue_url,
         "total_changes": changelog.get("total_changes", 0),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "validation": validation.to_dict(),
+        "completeness_score": completeness,
+        "source": v2_memo.get("_metadata", {}).get("_source", "onboarding"),
+        "conflicts_resolved": changelog.get("conflicts_resolved", []),
+        "v1_source": v1_memo.get("_metadata", {}).get("_source", "demo"),
     }
     save_json(meta_v2, account_id, "pipeline_meta.json", version="v2")
 
@@ -118,6 +145,8 @@ def run_pipeline_b(input_path: str | Path, account_id: str) -> dict:
         "changelog": changelog,
         "changelog_md": changelog_md,
         "output_dir": output_dir,
+        "validation": validation,
+        "completeness_score": completeness,
     }
 
 def _main() -> None:

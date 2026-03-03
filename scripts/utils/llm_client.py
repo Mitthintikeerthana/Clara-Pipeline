@@ -20,6 +20,7 @@ def _init():
     try:
         import os
         from google import genai
+        # Use only GEMINI_API_KEY, not GOOGLE_API_KEY from environment
         os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
         _client = genai.Client(api_key=GEMINI_API_KEY)
         _available = True

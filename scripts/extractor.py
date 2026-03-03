@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from datetime import datetime, timezone
 from typing import Any
 
 from scripts.config import GEMINI_API_KEY
@@ -48,14 +49,27 @@ _DEMO_EXTRACTION_PROMPT = """\
 You are a precise data extraction assistant. Your job is to extract structured information
 from a demo sales call transcript between a Clara AI representative and a business owner.
 
+CONTEXT: Clara Answers is an AI voice agent for service trade businesses including:
+- Fire protection companies
+- Sprinkler and alarm contractors
+- Electrical service providers
+- HVAC and facility maintenance companies
+
+These businesses handle: emergency calls, non-emergency service requests, inspection
+scheduling, after-hours routing, and integration constraints (e.g., ServiceTrade).
+
 TRANSCRIPT:
 \"\"\"
 {transcript}
 \"\"\"
 
-Extract ONLY the information explicitly stated in the transcript. Do NOT invent, infer, or
-hallucinate any details. If a field is not mentioned, leave it as an empty string or empty list.
-Flag genuinely unclear items in "questions_or_unknowns".
+CRITICAL RULES:
+1. Extract ONLY information explicitly stated. Do NOT invent, infer, or hallucinate.
+2. The demo call is EXPLORATORY - business hours, emergency definitions, routing rules,
+   and integration constraints may be incomplete or vague.
+3. If a field is not mentioned, leave it empty and flag it in "questions_or_unknowns".
+4. Mark demo-derived assumptions with "_source": "demo" in the metadata field.
+5. Flag missing critical config: business_hours, emergency_routing, transfer_rules, integrations.
 
 Return a single valid JSON object with EXACTLY this structure:
 
@@ -66,10 +80,11 @@ Return a single valid JSON object with EXACTLY this structure:
     "days": ["Monday", "Tuesday", ...],
     "start": "HH:MM",
     "end": "HH:MM",
-    "timezone": "US timezone name"
+    "timezone": "America/Phoenix"
   }},
   "office_address": "full street address or empty string",
   "services_supported": ["service1", "service2"],
+  "services_excluded": ["services we do NOT offer"],
   "emergency_definition": ["trigger1", "trigger2"],
   "emergency_routing_rules": {{
     "contacts": [
@@ -91,8 +106,19 @@ Return a single valid JSON object with EXACTLY this structure:
   "integration_constraints": ["constraint1", "constraint2"],
   "after_hours_flow_summary": "one-sentence summary of after-hours call handling",
   "office_hours_flow_summary": "one-sentence summary of business-hours call handling",
-  "questions_or_unknowns": ["item if truly unclear or missing"],
-  "notes": "any other relevant operational details"
+  "questions_or_unknowns": [
+    "list any critical config NOT discussed: business hours, emergency triggers, routing, integrations"
+  ],
+  "notes": "any other relevant operational details",
+  "_metadata": {{
+    "_source": "demo",
+    "_extraction_timestamp": "{timestamp}",
+    "_confidence_flags": {{
+      "business_hours_complete": false,
+      "emergency_routing_complete": false,
+      "integration_constraints_complete": false
+    }}
+  }}
 }}
 
 Return ONLY the JSON object, no markdown fences, no explanations.
@@ -103,7 +129,17 @@ You are a precise data extraction assistant. Your job is to extract CHANGES and 
 from an onboarding call transcript and express them as a JSON patch to apply on top of
 an existing v1 account memo.
 
-EXISTING V1 MEMO:
+CONTEXT: The onboarding call is CONFIGURATION-FOCUSED. This is where:
+- Exact business hours are confirmed
+- Time zones are finalized
+- Emergency definitions are clearly defined
+- After-hours routing logic is specified
+- Transfer timeouts are decided
+- Fallback logic is clarified
+- Integration rules are confirmed
+- Special constraints are introduced
+
+EXISTING V1 MEMO (demo-derived, may have incomplete assumptions):
 \"\"\"
 {v1_memo_json}
 \"\"\"
@@ -113,9 +149,15 @@ ONBOARDING TRANSCRIPT:
 {transcript}
 \"\"\"
 
-Extract ONLY changes that are explicitly stated in the onboarding transcript.
-Do NOT invent changes. If the transcript confirms an existing value without changing it,
-do NOT include it in the patch.
+CRITICAL RULES:
+1. Extract ONLY changes explicitly stated in the onboarding transcript.
+2. Do NOT invent changes. If the transcript confirms an existing value without changing it,
+   do NOT include it in the patch.
+3. Onboarding OVERRIDES or REFINES demo assumptions - resolve conflicts explicitly.
+4. For list fields (services_supported, emergency_definition, contacts), provide the
+   ENTIRE updated list as new_value.
+5. Mark onboarding-confirmed fields with "_source": "onboarding" in metadata.
+6. Flag any remaining unknowns after onboarding.
 
 Return a single valid JSON object with this structure:
 
@@ -126,35 +168,55 @@ Return a single valid JSON object with this structure:
       "field_path": "dot.separated.field.path",
       "old_value": <value from v1 or null if new>,
       "new_value": <updated value>,
-      "reason": "brief reason from the transcript"
+      "reason": "brief reason from the transcript",
+      "change_type": "added|modified|removed|confirmed"
     }}
   ],
-  "questions_or_unknowns": ["anything still unclear after onboarding"]
+  "questions_or_unknowns": ["anything still unclear after onboarding"],
+  "_metadata": {{
+    "_source": "onboarding",
+    "_extraction_timestamp": "{timestamp}",
+    "_conflicts_resolved": [
+      {{
+        "field": "field.path",
+        "demo_value": "...",
+        "onboarding_value": "...",
+        "resolution": "onboarding overrides demo"
+      }}
+    ]
+  }}
 }}
 
 Field path examples: "business_hours.days", "emergency_routing_rules.contacts",
 "services_supported", "call_transfer_rules.during_hours_primary"
 
-For list fields (e.g. services_supported, emergency_definition, contacts), provide the
-entire updated list as new_value.
+Change types:
+- "added": new field or list item
+- "modified": existing value changed
+- "removed": value removed
+- "confirmed": onboarding explicitly confirmed demo assumption (no change)
 
 Return ONLY the JSON object, no markdown fences, no explanations.
 """
 
 def _llm_extract_memo(transcript: str, account_id: str) -> dict:
+    timestamp = datetime.now(timezone.utc).isoformat()
     prompt = _DEMO_EXTRACTION_PROMPT.format(
         transcript=transcript.strip(),
         account_id=account_id,
+        timestamp=timestamp,
     )
     data = call_llm_json(prompt)
     data["account_id"] = account_id
     return data
 
 def _llm_extract_updates(transcript: str, v1_memo: dict) -> dict:
+    timestamp = datetime.now(timezone.utc).isoformat()
     prompt = _ONBOARDING_UPDATE_PROMPT.format(
         v1_memo_json=json.dumps(v1_memo, indent=2),
         transcript=transcript.strip(),
         account_id=v1_memo.get("account_id", ""),
+        timestamp=timestamp,
     )
     return call_llm_json(prompt)
 
@@ -313,7 +375,150 @@ def apply_patches(v1_memo: dict, patch_result: dict) -> dict:
     new_unknowns = patch_result.get("questions_or_unknowns", [])
     v2["questions_or_unknowns"] = existing + new_unknowns
 
+    # Merge metadata from patch_result
+    if "_metadata" in patch_result:
+        if "_metadata" not in v2:
+            v2["_metadata"] = {}
+        v2["_metadata"].update(patch_result["_metadata"])
+
     return v2
+
+_ONBOARDING_FORM_PROMPT = """\
+You are a precise data extraction assistant. Your job is to merge structured onboarding
+form data with an existing v1 account memo (from demo call).
+
+EXISTING V1 MEMO (demo-derived, may have incomplete assumptions):
+\"\"\"
+{v1_memo_json}
+\"\"\"
+
+ONBOARDING FORM DATA (structured JSON from client):
+\"\"\"
+{form_data_json}
+\"\"\"
+
+CRITICAL RULES:
+1. Merge form data with existing memo - form data OVERRIDES demo assumptions.
+2. Detect and flag conflicts between form data and v1 memo.
+3. Preserve fields not mentioned in the form.
+4. Mark form-derived fields with "_source": "onboarding_form" in metadata.
+5. Flag any remaining unknowns.
+
+Return a single valid JSON object with this structure:
+
+{{
+  "account_id": "{account_id}",
+  "patches": [
+    {{
+      "field_path": "dot.separated.field.path",
+      "old_value": <value from v1 or null if new>,
+      "new_value": <value from form>,
+      "reason": "onboarding form update",
+      "change_type": "added|modified|removed|confirmed"
+    }}
+  ],
+  "conflicts": [
+    {{
+      "field": "field.path",
+      "v1_value": "...",
+      "form_value": "...",
+      "resolution": "form overrides v1"
+    }}
+  ],
+  "questions_or_unknowns": ["anything still unclear after form merge"],
+  "_metadata": {{
+    "_source": "onboarding_form",
+    "_extraction_timestamp": "{timestamp}",
+    "_form_merged": true
+  }}
+}}
+
+Return ONLY the JSON object, no markdown fences, no explanations.
+"""
+
+def _llm_merge_form(form_data: dict, v1_memo: dict) -> dict:
+    timestamp = datetime.now(timezone.utc).isoformat()
+    prompt = _ONBOARDING_FORM_PROMPT.format(
+        v1_memo_json=json.dumps(v1_memo, indent=2),
+        form_data_json=json.dumps(form_data, indent=2),
+        account_id=v1_memo.get("account_id", ""),
+        timestamp=timestamp,
+    )
+    return call_llm_json(prompt)
+
+def merge_onboarding_form(form_data: dict, v1_memo: dict) -> dict:
+    """
+    Merge structured onboarding form data with existing v1 memo.
+    
+    Args:
+        form_data: Structured JSON from onboarding form
+        v1_memo: Existing v1 account memo from demo call
+    
+    Returns:
+        Updated memo with form data merged, conflicts flagged
+    """
+    account_id = v1_memo.get("account_id", "unknown")
+    
+    if GEMINI_API_KEY:
+        try:
+            logger.info("Merging onboarding form via LLM for %s", account_id)
+            return _llm_merge_form(form_data, v1_memo)
+        except Exception as exc:
+            logger.warning("LLM form merge failed (%s); falling back to direct merge.", exc)
+    
+    # Fallback: direct merge with conflict detection
+    import copy
+    result = copy.deepcopy(v1_memo)
+    conflicts = []
+    patches = []
+    
+    def merge_recursive(form: dict, base: dict, path: str = ""):
+        for key, form_val in form.items():
+            if key.startswith("_"):
+                continue
+            current_path = f"{path}.{key}" if path else key
+            
+            if key not in base:
+                base[key] = form_val
+                patches.append({
+                    "field_path": current_path,
+                    "old_value": None,
+                    "new_value": form_val,
+                    "reason": "onboarding form - new field",
+                    "change_type": "added"
+                })
+            elif isinstance(form_val, dict) and isinstance(base[key], dict):
+                merge_recursive(form_val, base[key], current_path)
+            elif base[key] != form_val:
+                conflicts.append({
+                    "field": current_path,
+                    "v1_value": base[key],
+                    "form_value": form_val,
+                    "resolution": "form overrides v1"
+                })
+                patches.append({
+                    "field_path": current_path,
+                    "old_value": base[key],
+                    "new_value": form_val,
+                    "reason": "onboarding form - override",
+                    "change_type": "modified"
+                })
+                base[key] = form_val
+    
+    merge_recursive(form_data, result)
+    
+    return {
+        "account_id": account_id,
+        "patches": patches,
+        "conflicts": conflicts,
+        "questions_or_unknowns": v1_memo.get("questions_or_unknowns", []),
+        "_metadata": {
+            "_source": "onboarding_form",
+            "_extraction_timestamp": datetime.now(timezone.utc).isoformat(),
+            "_form_merged": True,
+            "_fallback_merge": not GEMINI_API_KEY
+        }
+    }
 
 def extract_memo(transcript: str, account_id: str) -> dict:
     if GEMINI_API_KEY:

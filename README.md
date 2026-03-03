@@ -1,10 +1,99 @@
 # Clara Pipeline
 
-**Zero-Cost Automation: Demo Call → Retell Agent → Onboarding Update → Agent v2**
+**Clara Answers: Zero-Cost Automation for Service Trade Businesses**
+
+*Demo Call → Retell Agent → Onboarding Update → Agent v2*
 
 A fully automated, version-controlled pipeline that transforms raw call transcripts into
 production-ready Retell AI agent configurations — with structured diffs, changelogs,
 and task-tracker integration. Runs on your laptop. Costs $0.
+
+---
+
+## What is Clara Answers?
+
+Clara Answers is an AI-powered voice agent built using Retell that handles inbound calls
+for service trade businesses including:
+
+- **Fire protection companies**
+- **Sprinkler and alarm contractors**
+- **Electrical service providers**
+- **HVAC and facility maintenance companies**
+- **Plumbing services**
+
+These businesses deal with:
+- Emergency calls (e.g., sprinkler leak, fire alarm triggered)
+- Non-emergency service requests
+- Inspection scheduling
+- After-hours routing requirements
+- Integration constraints with systems like ServiceTrade
+
+---
+
+## The Client Journey
+
+### Stage 1 – Demo Call (Exploratory and Value-Driven)
+
+The demo call is **not** a configuration session. During the demo call:
+- The client explains their pain points
+- They describe current call handling problems
+- They interact with an example Clara agent
+- They experience the potential value of automation
+
+**At this stage:**
+- Business hours may not be fully discussed
+- Emergency definitions may be vague
+- Routing rules may be incomplete
+- Integration constraints may not be detailed
+- Some assumptions may still be open
+
+The demo call gives us **directional understanding, not final specifications**.
+
+**Pipeline A** generates a preliminary agent (v1) based only on what is explicitly stated.
+**Do not invent missing configuration details.**
+
+### Stage 2 – Purchase Decision
+
+After the demo, if the client decides to move forward, they purchase the service.
+Now we move from conceptual value to operational implementation.
+
+### Stage 3 – Onboarding Call (Operational Precision)
+
+The onboarding call is **configuration-focused**. This is where:
+- Exact business hours are confirmed
+- Time zones are finalized
+- Emergency definitions are clearly defined
+- After-hours routing logic is specified
+- Transfer timeouts are decided
+- Fallback logic is clarified
+- Integration rules are confirmed
+- Special constraints are introduced
+
+**Examples:**
+- "All emergency sprinkler calls must go directly to the phone tree."
+- "Non-emergency extinguisher calls can be collected after hours."
+- "Never create sprinkler jobs in ServiceTrade."
+- "If transfer fails after 60 seconds, dispatch must be notified."
+
+This stage **overrides or refines** the demo assumptions.
+
+**Pipeline B** takes the demo-generated agent (v1) and updates it using onboarding data
+to produce v2. It:
+- Preserves version history
+- Clearly logs changes
+- Avoids overwriting unrelated fields
+- Resolves conflicts logically and explicitly
+
+### Optional Stage – Onboarding Form
+
+Sometimes, instead of or in addition to a call, the client submits a structured
+onboarding form. This form may:
+- Clarify missing demo details
+- Introduce new constraints
+- Override previously assumed routing logic
+
+The system merges structured form data with existing account data, applies updates
+cleanly, flags conflicts, and regenerates the agent spec.
 
 ---
 
@@ -422,3 +511,77 @@ The pipeline is designed to be safely re-run:
 | demo_005.txt | CCS_005 | Coastal Comfort Systems | San Diego, CA |
 
 Each onboarding file corresponds to the same account and updates specific fields.
+
+---
+
+## Engineering Principles
+
+This pipeline is designed to test and demonstrate:
+
+### 1. Systems Thinking
+- Clear separation between exploratory data (demo) and confirmed configuration (onboarding)
+- Schema design for operational logic
+- Safe automation that handles uncertainty
+
+### 2. Responsible Data Handling
+- **No hallucination**: Extract only explicitly stated information
+- **No silent assumptions**: Flag missing data in `questions_or_unknowns`
+- **Explicit confidence flags**: Track which fields are demo-derived vs onboarding-confirmed
+
+### 3. Version Control Discipline
+- v1 based on demo call (preliminary, may have gaps)
+- v2 updated after onboarding (confirmed, production-ready)
+- Complete changelog with reasons for each change
+- Conflict detection and resolution tracking
+
+### 4. Prompt Engineering
+The agent prompt includes structured call flows:
+
+**Business Hours Flow:**
+1. Greeting
+2. Ask purpose
+3. Collect name and number
+4. Transfer or route
+5. Fallback if transfer fails
+6. Ask if they need anything else
+7. Close call
+
+**After-Hours Flow:**
+1. Greeting with hours disclosure
+2. Ask purpose / check for emergency
+3. If emergency: collect info first, then transfer
+4. If transfer fails: apologize and assure follow-up
+5. If non-emergency: collect details, confirm next-day callback
+6. Ask if they need anything else
+7. Close call
+
+### 5. Robust Automation
+- **Repeatable**: Same input produces same output
+- **Batch-capable**: Process multiple accounts in sequence
+- **Idempotent**: Re-running doesn't duplicate or corrupt data
+- **Logged**: All operations recorded with timestamps
+- **Reproducible**: Full audit trail from transcript to agent spec
+
+### 6. Validation & Quality
+- Schema validation for account memos
+- Completeness scoring per category
+- Confidence flags from LLM extraction
+- Conflict detection between demo and onboarding
+
+---
+
+## Assignment Simulation
+
+This pipeline simulates Clara's real onboarding automation challenge:
+
+> **Human conversations → structured operational rules → AI agent configuration → production-ready prompt**
+
+You are building the automation layer that converts messy, real-world conversation
+into a deployable AI voice agent.
+
+**Key Test Criteria:**
+1. Clear separation between demo-derived assumptions (v1) and onboarding-confirmed rules (v2)
+2. Intelligent handling of missing data (no hallucination, explicit `questions_or_unknowns`)
+3. Clean versioning with changelog
+4. Prompt discipline with explicit call flows
+5. Robust, repeatable automation

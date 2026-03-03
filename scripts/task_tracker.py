@@ -1,12 +1,3 @@
-"""
-Task Tracker integration - GitHub Issues (free, no credit card required).
-
-Creates one GitHub Issue per account when Pipeline A runs.
-Updates the issue (adds a comment) when Pipeline B produces v2.
-
-Falls back gracefully if GITHUB_TOKEN or GITHUB_REPO are not set.
-"""
-
 from __future__ import annotations
 
 import json
@@ -18,9 +9,6 @@ from datetime import datetime, timezone
 from scripts.config import GITHUB_TOKEN, GITHUB_REPO
 
 logger = logging.getLogger(__name__)
-
-
-# -- Internal HTTP helper (stdlib only, no requests dependency) -----------------
 
 def _gh_request(method: str, path: str, body: dict | None = None) -> dict | None:
     if not GITHUB_TOKEN or not GITHUB_REPO:
@@ -53,9 +41,6 @@ def _gh_request(method: str, path: str, body: dict | None = None) -> dict | None
         logger.error("GitHub request failed: %s", exc)
         return None
 
-
-# -- Issue management -----------------------------------------------------------
-
 def _build_issue_body(account_id: str, memo: dict, agent_spec: dict) -> str:
     bh = memo.get("business_hours", {})
     er = memo.get("emergency_routing_rules", {})
@@ -87,7 +72,6 @@ _Auto-created by Clara Pipeline. Review outputs at `outputs/accounts/{account_id
 """
     return body
 
-
 def _build_update_comment(account_id: str, changelog: dict) -> str:
     summary = changelog.get("summary", "See diff for details.")
     total = changelog.get("total_changes", 0)
@@ -102,7 +86,7 @@ def _build_update_comment(account_id: str, changelog: dict) -> str:
         f"",
         "### Changed Fields",
     ]
-    for c in changelog.get("changes", [])[:20]:    # Cap to avoid huge comments
+    for c in changelog.get("changes", [])[:20]:
         old = str(c.get("old_value", ""))[:60]
         new = str(c.get("new_value", ""))[:60]
         lines.append(f"- `{c['field_path']}`: `{old}` -> `{new}`")
@@ -113,14 +97,7 @@ def _build_update_comment(account_id: str, changelog: dict) -> str:
     ]
     return "\n".join(lines)
 
-
-# -- Public API -----------------------------------------------------------------
-
 def create_issue(account_id: str, memo: dict, agent_spec: dict) -> str | None:
-    """
-    Create a GitHub Issue for a newly processed account.
-    Returns the issue URL on success, None if GitHub is not configured or fails.
-    """
     if not GITHUB_TOKEN or not GITHUB_REPO:
         logger.info(
             "GitHub not configured - skipping issue creation for %s. "
@@ -145,12 +122,7 @@ def create_issue(account_id: str, memo: dict, agent_spec: dict) -> str | None:
     logger.warning("Failed to create GitHub issue for %s", account_id)
     return None
 
-
 def update_issue(account_id: str, issue_url: str | None, changelog: dict) -> bool:
-    """
-    Add a comment to the existing GitHub Issue when v2 is produced.
-    Falls back gracefully if the issue URL is unknown.
-    """
     if not GITHUB_TOKEN or not GITHUB_REPO:
         logger.info("GitHub not configured - skipping issue update for %s.", account_id)
         return False
@@ -159,7 +131,6 @@ def update_issue(account_id: str, issue_url: str | None, changelog: dict) -> boo
         logger.info("No issue URL for %s - creating a fresh issue comment is skipped.", account_id)
         return False
 
-    # Extract issue number from URL: .../issues/42
     import re
     m = re.search(r"/issues/(\d+)", issue_url)
     if not m:
@@ -177,9 +148,7 @@ def update_issue(account_id: str, issue_url: str | None, changelog: dict) -> boo
     logger.warning("Failed to add GitHub comment for %s", account_id)
     return False
 
-
 def close_issue(issue_url: str) -> bool:
-    """Mark an issue as closed (optional, for cleanup)."""
     if not GITHUB_TOKEN or not GITHUB_REPO:
         return False
 

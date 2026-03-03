@@ -1,12 +1,9 @@
-# Environment — never commit real keys
 .env
 
-# Pipeline outputs (generated, not source)
 outputs/
 logs/
 changelog/
 
-# Python
 __pycache__/
 *.py[cod]
 *.pyo
@@ -17,11 +14,9 @@ env/
 dist/
 build/
 
-# OS
 .DS_Store
 Thumbs.db
 
-# IDE
 .vscode/
 .idea/
 *.swp

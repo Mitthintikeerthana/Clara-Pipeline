@@ -1,18 +1,3 @@
-"""
-Minimal dashboard server (stdlib only, no Flask required).
-Serves the dashboard HTML and exposes a JSON API over the outputs directory.
-
-Run:
-    python dashboard/server.py
-    # then open http://localhost:8080
-
-Routes:
-    GET /                     → dashboard HTML
-    GET /api/accounts         → list of all account IDs
-    GET /api/account/<id>     → full data for one account (v1 + v2 + changelog)
-    GET /api/summary          → batch_summary.json (if it exists)
-"""
-
 from __future__ import annotations
 
 import json
@@ -21,14 +6,12 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
-# Ensure project root is on sys.path so we can import scripts.*
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 OUTPUTS_DIR = PROJECT_ROOT / "outputs" / "accounts"
 LOGS_DIR = PROJECT_ROOT / "logs"
 DASHBOARD_DIR = Path(__file__).parent
-
 
 def _load_json(path: Path) -> dict | list | None:
     if path.exists():
@@ -37,7 +20,6 @@ def _load_json(path: Path) -> dict | list | None:
         except Exception:
             return None
     return None
-
 
 def _accounts_api() -> list[dict]:
     if not OUTPUTS_DIR.exists():
@@ -57,7 +39,6 @@ def _accounts_api() -> list[dict]:
             "has_v2": "v2" in versions,
         })
     return accounts
-
 
 def _account_api(account_id: str) -> dict:
     base = OUTPUTS_DIR / account_id
@@ -93,17 +74,15 @@ def _account_api(account_id: str) -> dict:
         } if v2_memo else None,
     }
 
-
 def _summary_api() -> dict:
     summary = _load_json(LOGS_DIR / "batch_summary.json")
     if summary is None:
         return {"error": "No batch_summary.json found. Run batch_runner first."}
     return summary
 
-
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
-        pass  # Suppress default HTTP logs
+        pass
 
     def _send_json(self, data: dict | list, status: int = 200) -> None:
         body = json.dumps(data, indent=2, ensure_ascii=False).encode()
@@ -146,7 +125,6 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._send_json({"error": "Not found"}, 404)
 
-
 def main(port: int = 8080) -> None:
     server = HTTPServer(("0.0.0.0", port), Handler)
     print(f"  Clara Pipeline Dashboard")
@@ -156,7 +134,6 @@ def main(port: int = 8080) -> None:
         server.serve_forever()
     except KeyboardInterrupt:
         print("\nServer stopped.")
-
 
 if __name__ == "__main__":
     import argparse

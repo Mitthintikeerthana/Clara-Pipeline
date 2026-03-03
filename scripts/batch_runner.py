@@ -1,18 +1,3 @@
-"""
-Batch Runner - Process all 5 demo + 5 onboarding files end-to-end.
-
-Reads inputs/manifest.json to map each file to an account_id.
-Runs Pipeline A on all demo files, then Pipeline B on all onboarding files.
-Produces a batch_summary.json in the project root logs/ directory.
-
-Usage
------
-  python -m scripts.batch_runner
-  python -m scripts.batch_runner --demo-only
-  python -m scripts.batch_runner --onboarding-only
-  python -m scripts.batch_runner --account ACE_PLB_001   # single account
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -24,7 +9,6 @@ from datetime import datetime, timezone
 from scripts.config import INPUTS_DIR, LOGS_DIR
 
 logger = logging.getLogger(__name__)
-
 
 def _setup_root_logging() -> None:
     log_file = LOGS_DIR / f"batch_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
@@ -38,9 +22,6 @@ def _setup_root_logging() -> None:
     )
     logger.info("Batch log -> %s", log_file)
 
-
-# -- Manifest -------------------------------------------------------------------
-
 def _load_manifest() -> dict:
     manifest_path = INPUTS_DIR / "manifest.json"
     if not manifest_path.exists():
@@ -50,9 +31,6 @@ def _load_manifest() -> dict:
         )
     with manifest_path.open(encoding="utf-8") as fh:
         return json.load(fh)
-
-
-# -- Per-pipeline runners with error capture ------------------------------------
 
 def _run_a_safe(input_path: str, account_id: str) -> dict:
     from scripts.pipeline_a import run_pipeline_a
@@ -84,7 +62,6 @@ def _run_a_safe(input_path: str, account_id: str) -> dict:
             "error": str(exc),
         }
 
-
 def _run_b_safe(input_path: str, account_id: str) -> dict:
     from scripts.pipeline_b import run_pipeline_b
     start = time.monotonic()
@@ -115,9 +92,6 @@ def _run_b_safe(input_path: str, account_id: str) -> dict:
             "error": str(exc),
         }
 
-
-# -- Main batch function --------------------------------------------------------
-
 def run_batch(
     run_demo: bool = True,
     run_onboarding: bool = True,
@@ -134,7 +108,6 @@ def run_batch(
     results_a: list[dict] = []
     results_b: list[dict] = []
 
-    # -- Pipeline A (demo calls) -----------------------------------------------
     if run_demo:
         logger.info("=== Running Pipeline A for %d accounts ===", len(accounts))
         for entry in accounts:
@@ -148,7 +121,6 @@ def run_batch(
             else:
                 logger.warning("  FAIL %s - %s", account_id, result["error"])
 
-    # -- Pipeline B (onboarding calls) -----------------------------------------
     if run_onboarding:
         logger.info("=== Running Pipeline B for %d accounts ===", len(accounts))
         for entry in accounts:
@@ -164,7 +136,6 @@ def run_batch(
             else:
                 logger.warning("  FAIL %s - %s", account_id, result["error"])
 
-    # -- Summary ---------------------------------------------------------------
     all_results = results_a + results_b
     successes = sum(1 for r in all_results if r["status"] == "success")
     failures = sum(1 for r in all_results if r["status"] == "failed")
@@ -184,9 +155,6 @@ def run_batch(
     logger.info("Batch summary written to %s", summary_path)
 
     return summary
-
-
-# -- CLI ------------------------------------------------------------------------
 
 def _main() -> None:
     _setup_root_logging()
@@ -212,7 +180,6 @@ def _main() -> None:
         filter_account=args.account,
     )
 
-    # -- Print results table ---------------------------------------------------
     print("\n" + "=" * 60)
     print("  BATCH COMPLETE")
     print("=" * 60)
@@ -239,7 +206,6 @@ def _main() -> None:
 
     if summary["failures"] > 0:
         sys.exit(1)
-
 
 if __name__ == "__main__":
     _main()

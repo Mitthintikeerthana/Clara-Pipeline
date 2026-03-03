@@ -1,13 +1,3 @@
-"""
-Diff engine: produce a structured changelog between v1 and v2 account memos.
-
-Exported functions
-------------------
-compute_diff(v1, v2)                -> list of ChangeEntry dicts
-generate_changelog(account_id, diff, reason_map) -> changelog dict
-format_markdown_changelog(changelog) -> str
-"""
-
 from __future__ import annotations
 
 import json
@@ -17,14 +7,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
-# -- Deep diff -----------------------------------------------------------------
-
 def _flatten(obj: Any, prefix: str = "") -> dict[str, Any]:
-    """
-    Recursively flatten a nested dict/list to dot-separated paths.
-    Lists are stored as their JSON serialisation so they compare correctly.
-    """
     items: dict[str, Any] = {}
     if isinstance(obj, dict):
         for k, v in obj.items():
@@ -34,24 +17,12 @@ def _flatten(obj: Any, prefix: str = "") -> dict[str, Any]:
             else:
                 items[path] = v
     elif isinstance(obj, list):
-        # Treat lists atomically so that order/membership changes are captured
         items[prefix] = json.dumps(obj, sort_keys=True, ensure_ascii=False)
     else:
         items[prefix] = obj
     return items
 
-
 def compute_diff(v1: dict, v2: dict) -> list[dict]:
-    """
-    Return a list of ChangeEntry dicts describing every field that changed
-    between v1 and v2.
-
-    ChangeEntry schema:
-        field_path : str
-        old_value  : any
-        new_value  : any
-        change_type: "added" | "removed" | "modified"
-    """
     flat1 = _flatten(v1)
     flat2 = _flatten(v2)
 
@@ -59,7 +30,6 @@ def compute_diff(v1: dict, v2: dict) -> list[dict]:
     changes: list[dict] = []
 
     for key in sorted(all_keys):
-        # Skip metadata fields that always differ
         if key in ("generated_at", "version"):
             continue
 
@@ -83,21 +53,11 @@ def compute_diff(v1: dict, v2: dict) -> list[dict]:
 
     return changes
 
-
-# -- Changelog builder ----------------------------------------------------------
-
 def generate_changelog(
     account_id: str,
     diff: list[dict],
     patch_result: dict | None = None,
 ) -> dict:
-    """
-    Build a structured changelog dict.
-
-    patch_result (optional) - the raw patch output from extract_onboarding_updates(),
-    used to attach the human-readable "reason" to each change.
-    """
-    # Build a lookup from field_path -> reason using the patch result
     reason_map: dict[str, str] = {}
     if patch_result:
         for p in patch_result.get("patches", []):
@@ -106,9 +66,7 @@ def generate_changelog(
     enriched_changes = []
     for entry in diff:
         enriched = dict(entry)
-        # Try to find a reason from patch_result
         reason = reason_map.get(entry["field_path"], "")
-        # Also try parent paths (e.g. "business_hours.days" -> "business_hours")
         if not reason:
             parts = entry["field_path"].split(".")
             for i in range(len(parts) - 1, 0, -1):
@@ -118,7 +76,6 @@ def generate_changelog(
         enriched["reason"] = reason or "Updated during onboarding."
         enriched_changes.append(enriched)
 
-    # Compute a human-readable summary
     modified = [c for c in diff if c["change_type"] == "modified"]
     added = [c for c in diff if c["change_type"] == "added"]
     removed = [c for c in diff if c["change_type"] == "removed"]
@@ -142,13 +99,7 @@ def generate_changelog(
         "changes": enriched_changes,
     }
 
-
-# -- Markdown renderer ----------------------------------------------------------
-
 def format_markdown_changelog(changelog: dict) -> str:
-    """
-    Render a changelog dict as a human-readable Markdown string.
-    """
     lines: list[str] = [
         f"# Changelog - {changelog.get('account_id', 'unknown')}",
         "",
@@ -190,12 +141,10 @@ def format_markdown_changelog(changelog: dict) -> str:
 
     return "\n".join(lines)
 
-
 def _pretty(val: Any) -> str:
     if val is None:
         return "(removed)"
     if isinstance(val, str) and val.startswith("["):
-        # Was stored as JSON list string by _flatten
         try:
             parsed = json.loads(val)
             return ", ".join(str(v) for v in parsed) if parsed else "(empty)"

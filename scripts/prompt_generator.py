@@ -1,14 +1,3 @@
-"""
-Account Memo -> Retell Agent Spec (v1 / v2).
-
-Generates:
-  - A human-readable system prompt for the Retell LLM agent
-  - A full agent_spec JSON that mirrors the Retell API create-agent payload
-
-The spec is valid for manual import into the Retell UI or, when a Retell API
-key is present, can be submitted directly via the Retell REST API.
-"""
-
 from __future__ import annotations
 
 import logging
@@ -17,16 +6,12 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-
-# -- Helpers -------------------------------------------------------------------
-
 def _fmt_days(days: list[str]) -> str:
     if not days:
         return "Monday-Friday"
     if len(days) == 1:
         return days[0]
     return ", ".join(days[:-1]) + " and " + days[-1]
-
 
 def _fmt_hours(memo: dict) -> str:
     bh = memo.get("business_hours", {})
@@ -37,7 +22,6 @@ def _fmt_hours(memo: dict) -> str:
     tz_label = tz.split("/")[-1].replace("_", " ") if "/" in tz else tz
     return f"{days}, {start}-{end} {tz_label}".strip()
 
-
 def _fmt_emergency_contacts(contacts: list[dict]) -> str:
     if not contacts:
         return "  (no emergency contacts on file)"
@@ -46,20 +30,14 @@ def _fmt_emergency_contacts(contacts: list[dict]) -> str:
         lines.append(f"  {c.get('order', '?')}. {c.get('name', 'Unknown')} - {c.get('phone', 'no phone')}")
     return "\n".join(lines)
 
-
 def _fmt_services(services: list[str]) -> str:
     return "\n".join(f"  - {s}" for s in services) if services else "  (see office for details)"
-
 
 def _fmt_emergency_triggers(triggers: list[str]) -> str:
     return "\n".join(f"  - {t}" for t in triggers) if triggers else "  (consult with dispatch)"
 
-
 def _fmt_constraints(constraints: list[str]) -> str:
     return "\n".join(f"  - {c}" for c in constraints) if constraints else ""
-
-
-# -- System prompt builder ------------------------------------------------------
 
 _SYSTEM_PROMPT_TEMPLATE = """\
 # IDENTITY
@@ -161,7 +139,6 @@ The following situations ALWAYS qualify as emergencies requiring immediate escal
 - If a caller is abusive, calmly state you are here to help and may need to end the call.
 """
 
-
 def generate_system_prompt(memo: dict, version: str = "v1") -> str:
     bh = memo.get("business_hours", {})
     er = memo.get("emergency_routing_rules", {})
@@ -169,12 +146,10 @@ def generate_system_prompt(memo: dict, version: str = "v1") -> str:
     ne = memo.get("non_emergency_routing_rules", {})
     constraints = memo.get("integration_constraints", [])
 
-    # Excluded services note
     constraints_text = _fmt_constraints(constraints)
     if not constraints_text:
         constraints_text = "  (no specific constraints on file - use good judgment)"
 
-    # Transfer fail message
     company = memo.get("company_name", "our company")
     fallback = er.get("fallback", "")
     if not fallback:
@@ -203,10 +178,6 @@ def generate_system_prompt(memo: dict, version: str = "v1") -> str:
 
     return prompt.strip()
 
-
-# -- Retell agent spec builder --------------------------------------------------
-
-# Retell voices available on free tier (as of 2025)
 _DEFAULT_VOICE = "openai-Alloy"
 
 _RECOMMENDED_VOICES = {
@@ -216,15 +187,7 @@ _RECOMMENDED_VOICES = {
     "friendly_male": "openai-Echo",
 }
 
-
 def generate_agent_spec(memo: dict, version: str = "v1") -> dict:
-    """
-    Build a Retell Agent Draft Spec JSON.
-
-    This mirrors the Retell `POST /create-agent` API body.
-    If you have a Retell API key, pass this to `retell_client.create_or_update_agent()`.
-    Otherwise, paste the `system_prompt` field manually into the Retell UI.
-    """
     system_prompt = generate_system_prompt(memo, version=version)
     bh = memo.get("business_hours", {})
     er = memo.get("emergency_routing_rules", {})
@@ -234,28 +197,24 @@ def generate_agent_spec(memo: dict, version: str = "v1") -> dict:
     agent_name = f"{company} - Clara ({version.upper()})"
 
     spec: dict[str, Any] = {
-        # -- Identity ----------------------------------------------------------
         "agent_name": agent_name,
         "version": version,
         "generated_at": datetime.now(timezone.utc).isoformat(),
 
-        # -- LLM configuration -------------------------------------------------
         "response_engine": {
             "type": "retell-llm",
-            "model": "gpt-4o-mini",          # Free-tier compatible model
+            "model": "gpt-4o-mini",
             "system_prompt": system_prompt,
-            "temperature": 0.3,              # Low temp for consistent, predictable responses
+            "temperature": 0.3,
         },
 
-        # -- Voice -------------------------------------------------------------
         "voice_id": _DEFAULT_VOICE,
         "voice_speed": 1.0,
         "voice_temperature": 0.7,
         "language": "en-US",
 
-        # -- Call behaviour ----------------------------------------------------
         "begin_message": f"Thank you for calling {company}, this is Clara speaking. How can I help you today?",
-        "max_call_duration_sec": 600,        # 10 minutes
+        "max_call_duration_sec": 600,
         "boosted_keywords": [
             company.split()[0],
             "emergency",
@@ -263,7 +222,6 @@ def generate_agent_spec(memo: dict, version: str = "v1") -> dict:
             "transfer",
         ],
 
-        # -- Key variables (substituted at call time) --------------------------
         "key_variables": {
             "company_name": company,
             "timezone": bh.get("timezone", ""),
@@ -280,8 +238,6 @@ def generate_agent_spec(memo: dict, version: str = "v1") -> dict:
             "daytime_transfer_number": ct.get("during_hours_primary", ""),
         },
 
-        # -- Tool invocation placeholders --------------------------------------
-        # NOTE: Tool names are NEVER revealed to the caller.
         "tool_invocation_placeholders": [
             {
                 "tool_name": "transfer_call",
@@ -306,7 +262,6 @@ def generate_agent_spec(memo: dict, version: str = "v1") -> dict:
             },
         ],
 
-        # -- Transfer protocol -------------------------------------------------
         "call_transfer_protocol": {
             "during_hours": {
                 "primary_number": ct.get("during_hours_primary", ""),
@@ -327,24 +282,19 @@ def generate_agent_spec(memo: dict, version: str = "v1") -> dict:
             },
         },
 
-        # -- Fallback protocol -------------------------------------------------
         "fallback_protocol": {
             "max_transfer_attempts": len(er.get("contacts", [])) or 2,
             "message_if_all_fail": (
                 "I was unable to connect you right now. Your information has been "
                 "logged and our team will call you back as soon as possible."
             ),
-            "send_sms_alert": False,        # Enable in production
+            "send_sms_alert": False,
         },
     }
 
     return spec
 
-
-# -- Public entry point ---------------------------------------------------------
-
 def build_all_outputs(memo: dict, version: str = "v1") -> dict:
-    """Return both system_prompt and full agent_spec for a memo."""
     prompt = generate_system_prompt(memo, version=version)
     spec = generate_agent_spec(memo, version=version)
     return {"system_prompt": prompt, "agent_spec": spec}

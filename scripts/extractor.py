@@ -1,15 +1,3 @@
-"""
-Transcript -> Account Memo extraction.
-
-Primary path  : Gemini (free tier via AI Studio).
-Fallback path : Rule-based regex extraction (no API key required).
-
-Exported functions
-------------------
-extract_memo(transcript, account_id)            -> dict   (Pipeline A)
-extract_onboarding_updates(transcript, v1_memo) -> dict   (Pipeline B)
-"""
-
 from __future__ import annotations
 
 import json
@@ -21,8 +9,6 @@ from scripts.config import GEMINI_API_KEY
 from scripts.utils.llm_client import call_llm_json
 
 logger = logging.getLogger(__name__)
-
-# -- Canonical empty memo schema ------------------------------------------------
 
 def _empty_memo(account_id: str) -> dict:
     return {
@@ -57,9 +43,6 @@ def _empty_memo(account_id: str) -> dict:
         "questions_or_unknowns": [],
         "notes": "",
     }
-
-
-# -- LLM extraction prompts -----------------------------------------------------
 
 _DEMO_EXTRACTION_PROMPT = """\
 You are a precise data extraction assistant. Your job is to extract structured information
@@ -158,19 +141,14 @@ entire updated list as new_value.
 Return ONLY the JSON object, no markdown fences, no explanations.
 """
 
-
-# -- LLM-based extraction -------------------------------------------------------
-
 def _llm_extract_memo(transcript: str, account_id: str) -> dict:
     prompt = _DEMO_EXTRACTION_PROMPT.format(
         transcript=transcript.strip(),
         account_id=account_id,
     )
     data = call_llm_json(prompt)
-    # Ensure account_id is always correct
     data["account_id"] = account_id
     return data
-
 
 def _llm_extract_updates(transcript: str, v1_memo: dict) -> dict:
     prompt = _ONBOARDING_UPDATE_PROMPT.format(
@@ -179,9 +157,6 @@ def _llm_extract_updates(transcript: str, v1_memo: dict) -> dict:
         account_id=v1_memo.get("account_id", ""),
     )
     return call_llm_json(prompt)
-
-
-# -- Rule-based fallback extraction (no API key required) ----------------------
 
 _TIMEZONE_MAP = {
     "eastern": "America/New_York",
@@ -204,7 +179,6 @@ _ADDRESS_RE = re.compile(
     re.IGNORECASE,
 )
 
-
 def _parse_time(text: str) -> str:
     m = _TIME_RE.search(text)
     if not m:
@@ -216,10 +190,8 @@ def _parse_time(text: str) -> str:
         h = 0
     return f"{h:02d}:{mn:02d}"
 
-
 def _extract_days(text: str) -> list[str]:
     lower = text.lower()
-    # Handle "Monday through Friday" ranges
     range_m = re.search(
         r"(monday|tuesday|wednesday|thursday|friday|saturday|sunday)"
         r"\s+(?:through|to|thru|-)\s+"
@@ -233,12 +205,8 @@ def _extract_days(text: str) -> list[str]:
         return [_DAY_NAMES[i].capitalize() for i in indices]
     return [d.capitalize() for d in _DAY_NAMES if d in lower]
 
-
-# Industry keywords that anchor the end of a company name
 _INDUSTRY = r"(?:HVAC|Plumbing|Electrical|Heating|Cooling|Comfort|Air|Services|Systems|Solutions|Mechanical)"
 
-# Match 1-4 title-case words (with optional "&") followed by an industry keyword.
-# Handles: "ACE Plumbing & HVAC", "Blue Ridge Heating & Air", "Coastal Comfort Systems"
 _COMPANY_RE = re.compile(
     r"\b((?:[A-Z][A-Za-z]+ (?:& )?){1,4}" + _INDUSTRY + r")\b"
 )
@@ -249,15 +217,9 @@ _EMERGENCY_PATTERNS = [
     r"no power", r"boiler failure", r"complete.*failure",
 ]
 
-
-
-
-
-
 def _extract_company_name(transcript: str) -> str:
     m = _COMPANY_RE.search(transcript)
     return m.group(1).strip() if m else ""
-
 
 def _extract_hours_from_lines(lines: list[str]) -> dict:
     result: dict[str, Any] = {}
@@ -274,19 +236,14 @@ def _extract_hours_from_lines(lines: list[str]) -> dict:
             result["end"] = _parse_time(f"{times[1][0]}:{times[1][1]} {times[1][2]}")
     return result
 
-
 def _extract_timezone(transcript: str) -> str:
-    # Require the keyword to be adjacent to "time", "timezone", or abbreviation context
-    # e.g. "Mountain Time", "Eastern Time", "PT", "ET"
     for tz_key, tz_val in _TIMEZONE_MAP.items():
         if re.search(r"(?:^|\s)" + tz_key + r"\s+time\b", transcript, re.I):
             return tz_val
-    # Fallback: look for two-letter abbreviations (PT, ET, CT, MT) in parentheses or standalone
     for tz_key, tz_val in _TIMEZONE_MAP.items():
         if len(tz_key) == 2 and re.search(r"\b" + tz_key.upper() + r"\b", transcript):
             return tz_val
     return ""
-
 
 def _extract_emergency_triggers(transcript: str) -> list[str]:
     triggers = []
@@ -297,12 +254,7 @@ def _extract_emergency_triggers(transcript: str) -> list[str]:
                 triggers.append(snippet.group(0).strip())
     return list(set(triggers))
 
-
 def _rule_based_extract(transcript: str, account_id: str) -> dict:
-    """
-    Best-effort extraction using regex patterns.
-    Used when GEMINI_API_KEY is not set.
-    """
     memo = _empty_memo(account_id)
     lines = transcript.strip().splitlines()
 
@@ -333,16 +285,11 @@ def _rule_based_extract(transcript: str, account_id: str) -> dict:
     )
     return memo
 
-
-# -- Apply patch to memo --------------------------------------------------------
-
 def _set_nested(obj: dict, path: str, value: Any) -> None:
-    """Set a value in a nested dict using dot-separated path."""
     keys = path.split(".")
     for key in keys[:-1]:
         obj = obj.setdefault(key, {})
     obj[keys[-1]] = value
-
 
 def _get_nested(obj: dict, path: str) -> Any:
     keys = path.split(".")
@@ -352,11 +299,7 @@ def _get_nested(obj: dict, path: str) -> Any:
         obj = obj.get(key)
     return obj
 
-
 def apply_patches(v1_memo: dict, patch_result: dict) -> dict:
-    """
-    Apply onboarding patches to a v1 memo, returning the updated v2 memo.
-    """
     import copy
     v2 = copy.deepcopy(v1_memo)
     for patch in patch_result.get("patches", []):
@@ -366,21 +309,13 @@ def apply_patches(v1_memo: dict, patch_result: dict) -> dict:
             _set_nested(v2, path, new_val)
             logger.info("Patched %s -> %s", path, repr(new_val)[:80])
 
-    # Merge unknowns from onboarding
     existing = v2.get("questions_or_unknowns", [])
     new_unknowns = patch_result.get("questions_or_unknowns", [])
     v2["questions_or_unknowns"] = existing + new_unknowns
 
     return v2
 
-
-# -- Public API -----------------------------------------------------------------
-
 def extract_memo(transcript: str, account_id: str) -> dict:
-    """
-    Extract a full account memo from a demo call transcript.
-    Uses LLM if GEMINI_API_KEY is set, otherwise falls back to rule-based.
-    """
     if GEMINI_API_KEY:
         try:
             logger.info("Extracting memo via LLM for %s", account_id)
@@ -391,12 +326,7 @@ def extract_memo(transcript: str, account_id: str) -> dict:
     logger.info("Extracting memo via rule-based fallback for %s", account_id)
     return _rule_based_extract(transcript, account_id)
 
-
 def extract_onboarding_updates(transcript: str, v1_memo: dict) -> dict:
-    """
-    Extract a patch dict from an onboarding call transcript.
-    Uses LLM if available; returns empty patch list otherwise.
-    """
     account_id = v1_memo.get("account_id", "unknown")
     if GEMINI_API_KEY:
         try:

@@ -1,0 +1,74 @@
+CLARA ONBOARDING CALL TRANSCRIPT
+Account: MPH_004
+Date: 2025-02-10
+Participants: Riley Nguyen (Clara Onboarding), Jake Hoffman (Owner, Mountain Peak HVAC)
+
+---
+
+Riley: Hi Jake, good to catch up. Ready to finalize your configuration?
+
+Jake: Yeah, let's do it. I've been thinking about a few things I want to adjust.
+
+Riley: Perfect. Let's go through it systematically. Business hours — Monday through Saturday, eight to six, Mountain Time?
+
+Jake: I want to add Sunday. We've been getting enough calls that ignoring Sundays doesn't make sense anymore. Sundays we'll be noon to four PM, Mountain Time. So now seven days a week.
+
+Riley: Monday through Saturday eight to six, and Sundays noon to four. Got it.
+
+Jake: Correct.
+
+Riley: Emergency contacts — you first at 720-555-0156, then Lisa Chen at 720-555-0178.
+
+Jake: I want to change the rotation. Lisa and I have worked out a split. I handle emergencies on Monday, Wednesday, and Friday. Lisa handles Tuesday, Thursday, Saturday, and Sunday. So on those days the caller order should be flipped — Lisa first, then me.
+
+Riley: So the primary contact alternates based on day of week? Monday, Wednesday, Friday — Jake first. Tuesday, Thursday, Saturday, Sunday — Lisa first?
+
+Jake: Exactly right. Can the system handle that?
+
+Riley: We can add a schedule note to the agent prompt. The agent will always attempt both contacts, but the order in the prompt will reflect the rotation schedule. I'll document this clearly.
+
+Jake: That works. The important thing is both of us get tried. The order matters less than both being attempted.
+
+Riley: Understood. Both always attempted, rotation order noted. Now FieldEdge constraints — job types must be accurate for residential versus commercial, no window units or portable ACs, no duct cleaning.
+
+Jake: Still all correct. Add one — any system replacement job should be tagged "new system install" in the FieldEdge notes. It affects our inventory and warranty tracking. If the caller indicates they need a full replacement, make sure the message notes say "REPLACEMENT JOB."
+
+Riley: Got it. When a caller's issue indicates a full system replacement, agent notes "REPLACEMENT JOB" in the message. That's a great process note.
+
+Jake: Yeah, it saves us a lot of follow-up work.
+
+Riley: Business hours routing — main line 720-555-0100. Still correct?
+
+Jake: Still correct. No changes there.
+
+Riley: Services — heating repair, AC repair, boiler work, ductless mini-splits, geothermal, furnace replacement, maintenance agreements.
+
+Jake: Add indoor air quality testing and services. We started doing IAQ assessments and installations — air purifiers, whole-home humidifiers, that kind of thing. It's become a growing category for us.
+
+Riley: Adding indoor air quality testing and services. Got it.
+
+Jake: Also, we started doing commercial kitchen exhaust and makeup air systems. That's a niche service but we get calls for it. Add that too.
+
+Riley: Commercial kitchen exhaust and makeup air systems. Done.
+
+Riley: Things you don't do — window units, portable ACs, duct cleaning, appliance repair.
+
+Jake: All still correct. Also add residential boilers under the services — I don't think we had that explicitly. We do residential boiler service and replacement.
+
+Riley: Adding residential boiler service and replacement to services supported.
+
+Jake: And one more emergency scenario I want added — any commercial client who calls saying their building heating system is completely down, that's a priority emergency regardless of time of day or day of week. I want that called out explicitly.
+
+Riley: Adding to emergency definitions: complete building heating system failure for commercial clients — treat as priority emergency at any time.
+
+Jake: Perfect.
+
+Riley: Last question — any changes to after-hours non-emergency handling?
+
+Jake: No changes there. Take a message, call back next morning.
+
+Riley: Sounds like we've got a solid v2. Going live next week?
+
+Jake: Let's do it. Thanks Riley.
+
+Riley: Thank you Jake.

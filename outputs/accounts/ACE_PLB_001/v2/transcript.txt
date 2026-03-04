@@ -1,0 +1,58 @@
+CLARA ONBOARDING CALL TRANSCRIPT
+Account: ACE_PLB_001
+Date: 2025-02-03
+Participants: Sarah Chen (Clara Onboarding), Mike Torres (Owner, ACE Plumbing & HVAC)
+
+---
+
+Sarah: Hi Mike, welcome back. This is the onboarding call to finalize everything before we go live. How are you?
+
+Mike: Doing great, Sarah. Ready to get this set up.
+
+Sarah: Perfect. I've got your draft configuration in front of me. Let's go through it together and make sure everything is accurate. Starting with business hours — we have you as Monday through Friday, seven to six, and Saturday eight to three. Is that still right?
+
+Mike: Almost. I actually want to add Sundays now. We've been getting enough Sunday calls that I hired an extra tech. Sundays we'll be nine AM to two PM, same Mountain Time.
+
+Sarah: Got it. So now you're seven days a week. Monday-Friday seven to six, Saturday eight to three, Sunday nine to two.
+
+Mike: Exactly. The Saturday and Monday-Friday hours haven't changed.
+
+Sarah: Perfect. Business hours times stay the same, just adding Sunday nine to two. Now let's go over the emergency contacts. We have Dave Reyes at 602-555-0142 as primary, and Marcus Hill at 602-555-0198 as secondary.
+
+Mike: That's correct. I also want to add a third level now — if both Dave and Marcus are unavailable, call my daughter Janelle Torres at 602-555-0210. She manages our after-hours dispatch for us.
+
+Sarah: Great, adding Janelle Torres at 602-555-0210 as the third emergency contact. And she'd be contact order three?
+
+Mike: Right, exactly.
+
+Sarah: Now for the ServiceTrade constraints — we noted never create sprinkler jobs, and no jobs more than sixty miles from Phoenix without your approval. Anything to add?
+
+Mike: Yes — also add commercial kitchen equipment. Never create a job in ServiceTrade for commercial kitchen equipment. I thought I mentioned this on the demo call but wanted to make sure it's explicit.
+
+Sarah: It was mentioned as a note but we'll promote it to a formal constraint. Never create ServiceTrade jobs for commercial kitchen equipment. Got it.
+
+Mike: And actually, while we're at it — never book any restaurant or food service client without checking with me. We had a bad experience with a restaurant job last year and I'm selective about those now.
+
+Sarah: Noted. No restaurant or food service jobs without your prior approval. That goes in as an integration constraint.
+
+Sarah: Services offered — we have residential and commercial plumbing and HVAC. You had said no sprinklers, no pool, no appliance repair. Still the same?
+
+Mike: Yes, but add one — we now offer water filtration systems. I've been doing those for about a year and I want calls about water filtration to actually come to us instead of being turned away.
+
+Sarah: Adding water filtration systems to services supported. Great. Any changes to the daytime routing?
+
+Mike: No, Jessica is still at extension 101, main line is still 602-555-0100. No changes there.
+
+Sarah: Perfect. Anything else before we finalize?
+
+Mike: I think that covers it. Oh — one quick thing. The on-call rotation. We talked about it being flexible, but right now Dave Reyes specifically covers Wednesday through Sunday, and Marcus covers Monday and Tuesday. I want the AI to know that, though honestly it doesn't change how the calls are handled — just giving you the context.
+
+Sarah: Got it. I'll note the rotation schedule in the account notes section. It won't change the call flow but good for context.
+
+Mike: Exactly. I think we're good. When does this go live?
+
+Sarah: We're targeting next Monday for your account. You'll receive a confirmation email.
+
+Mike: Perfect. Thanks Sarah.
+
+Sarah: Thank you Mike. Looking forward to supporting ACE Plumbing & HVAC.

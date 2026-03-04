@@ -1,0 +1,80 @@
+CLARA ONBOARDING CALL TRANSCRIPT
+Account: CCS_005
+Date: 2025-02-12
+Participants: Morgan Lee (Clara Onboarding), David Kim (Owner, Coastal Comfort Systems)
+
+---
+
+Morgan: Hi David, great to be on this onboarding call. Let's make sure everything is right before we go live.
+
+David: Sounds good. I actually have several updates.
+
+Morgan: Let's go through everything. Business hours — Monday through Friday, eight to five, Pacific Time?
+
+David: I want to extend Friday hours. Starting this month, we stay open until six PM on Fridays only. So Monday through Thursday eight to five, and Friday eight to six.
+
+Morgan: Got it. Monday-Thursday eight to five, Friday eight to six, Pacific Time.
+
+David: That's it.
+
+Morgan: And still closed weekends?
+
+David: Closed weekends yes, but I want to add the partner referral contact info for weekends. When someone calls on a weekend for a non-emergency, the agent should let them know we're closed and offer the name of our partner: Desert Comfort Systems. Their number is 760-555-0100. For non-emergency weekend calls only — not for emergencies, those still come to us.
+
+Morgan: Perfect. For non-emergency weekend calls, suggest Desert Comfort Systems at 760-555-0100. Emergencies still handled by Coastal Comfort regardless of day.
+
+David: Exactly.
+
+Morgan: Emergency contacts — shared emergency line 619-555-0200 first, then your direct cell 619-555-0215.
+
+David: The emergency line number has changed. We moved to a new phone system. The new emergency line is 619-555-0201. All four people still ring simultaneously on that number, just a different number now.
+
+Morgan: Updating emergency line from 619-555-0200 to 619-555-0201. Your direct cell 619-555-0215 stays as the fallback.
+
+David: Correct.
+
+Morgan: And the during-hours main line is also 619-555-0200 — does that change too?
+
+David: No, the daytime main office number is staying at 619-555-0200. We just changed the after-hours emergency line. The office number during business hours is unchanged.
+
+Morgan: Understood. Daytime office 619-555-0200 unchanged. After-hours emergency line now 619-555-0201.
+
+David: You got it.
+
+Morgan: ServiceTrade constraints — never create jobs for Riverside County.
+
+David: I need to update that. We're now taking HVAC jobs in Riverside County. We hired two new techs who live out that way so we can cover it now. However, we still don't do plumbing in Riverside County — that's too far for our plumbers. So the constraint becomes: never book Riverside County plumbing jobs. HVAC in Riverside is now fine.
+
+Morgan: Got it. Constraint updated to: no plumbing jobs in Riverside County. HVAC in Riverside County is now permitted.
+
+David: Perfect.
+
+Morgan: Services — HVAC repair, maintenance, replacement; plumbing repair, water heater, drain cleaning, leak detection. Any changes?
+
+David: Yes. We've added commercial HVAC maintenance agreements. That's been growing and we want calls about commercial maintenance to come to us. Add commercial HVAC maintenance contracts to the services.
+
+Morgan: Adding commercial HVAC maintenance agreements.
+
+David: Also add tankless water heater installation and service. We've been doing those for about a year but forgot to mention it on the demo call.
+
+Morgan: Tankless water heater installation and service. Done.
+
+Morgan: Things you don't do — commercial boilers, industrial HVAC, medical gas plumbing.
+
+David: All still correct. Add one more — no whole-house repiping. We get calls for that and it's outside our scope. We do targeted plumbing repairs but not full repiping projects.
+
+Morgan: No whole-house repiping. Added.
+
+Morgan: Any preferences on how the agent handles callers asking about both HVAC and plumbing? Since you do both?
+
+David: Yes — if someone calls with a plumbing need and an HVAC need in the same call, handle them as one call. Don't transfer twice or make them call back. Collect all the info and let our dispatch sort out which tech goes.
+
+Morgan: I'll add an instruction that the agent collects all service needs in a single call and notes both HVAC and plumbing issues in the message if both come up.
+
+David: Perfect.
+
+Morgan: I think that covers everything. You'll be live Monday.
+
+David: Great. Thanks Morgan, this has been really smooth.
+
+Morgan: Thank you David. Excited to support Coastal Comfort Systems.

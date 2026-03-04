@@ -1,0 +1,39 @@
+{
+  "account_id": "BRH_002",
+  "pipeline": "A",
+  "version": "v1",
+  "lifecycle_stage": "demo_complete",
+  "input_file": "c:\\Users\\mitti\\clara-pipeline\\inputs\\demo\\demo_002.txt",
+  "issue_url": "https://github.com/Mitthintikeerthana/Clara-Pipeline/issues/17",
+  "generated_at": "2026-03-04T06:42:46.810666+00:00",
+  "validation": {
+    "account_id": "BRH_002",
+    "is_valid": true,
+    "is_complete": false,
+    "is_demo_derived": false,
+    "is_onboarding_confirmed": false,
+    "errors": [],
+    "warnings": [
+      "emergency_routing_rules.fallback is empty",
+      "call_transfer_rules.during_hours_primary is empty - daytime calls won't transfer",
+      "1 unknown(s) flagged: Full extraction not available - set GEMINI_API_KEY for LLM-based extraction.",
+      "No services_supported defined"
+    ],
+    "info": [],
+    "error_count": 0,
+    "warning_count": 4
+  },
+  "completeness_score": {
+    "business_hours": 50,
+    "emergency_routing": 60,
+    "call_transfer": 40,
+    "services": 0,
+    "constraints": 50,
+    "overall": 43.5
+  },
+  "source": "demo",
+  "confidence_flags": {},
+  "questions_or_unknowns": [
+    "Full extraction not available - set GEMINI_API_KEY for LLM-based extraction."
+  ]
+}

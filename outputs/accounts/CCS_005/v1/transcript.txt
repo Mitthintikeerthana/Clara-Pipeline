@@ -1,0 +1,62 @@
+CLARA DEMO CALL TRANSCRIPT
+Account: CCS_005
+Date: 2025-01-24
+Participants: Morgan Lee (Clara Sales), David Kim (Owner, Coastal Comfort Systems)
+
+---
+
+Morgan: Hi David, thanks for connecting. I'm Morgan from Clara. Tell me about Coastal Comfort Systems.
+
+David: Hi Morgan. I'm David Kim, I've been running Coastal Comfort Systems for about twelve years now. We're based in San Diego, California. We do HVAC and plumbing — a bit unusual to do both, but it works well for us. We serve residential and light commercial customers in San Diego County. Pacific Time out here.
+
+Morgan: Great combination. What are your business hours?
+
+David: Monday through Friday, eight AM to five PM, Pacific Time. We don't have Saturday or Sunday hours — we refer weekend non-emergency calls to a partner company.
+
+Morgan: And for emergencies?
+
+David: We cover those ourselves around the clock. The team has an emergency rotation.
+
+Morgan: How do you define an emergency?
+
+David: For HVAC: no AC when it's above ninety degrees, especially for elderly customers or homes with infants. No heat when it drops below fifty degrees — not common in San Diego but it happens in the mountains. For plumbing: burst pipe, sewage backup, no water supply to a structure. Gas leak is always an emergency regardless of what kind of work it relates to. Those are the non-negotiables.
+
+Morgan: Emergency routing — who gets called?
+
+David: We have a shared emergency line — 619-555-0200. That line rings four people simultaneously: me, my two lead techs, and our office manager. Whoever picks up first handles it. If nobody answers within five minutes, they should call my cell directly, which is 619-555-0215.
+
+Morgan: For non-emergency after hours?
+
+David: Take their name and number and a brief description. Promise a callback next business day. Don't make any same-day commitments.
+
+Morgan: During business hours?
+
+David: Transfer to our main office at 619-555-0200. If nobody answers in four rings, take a message. We're usually pretty responsive during the day though.
+
+Morgan: What software do you use?
+
+David: ServiceTrade. We've been on it for about four years. Works well for us.
+
+Morgan: Any ServiceTrade constraints?
+
+David: One big one — never create jobs for Riverside County. That's outside our service area. If someone calls from Riverside, politely let them know we don't service that area and wish them well. We get those calls occasionally because people find us online.
+
+Morgan: Understood. Office address?
+
+David: Seven-two-zero-zero Clairemont Mesa Boulevard, San Diego, California, nine-two-one-one-one.
+
+Morgan: Services?
+
+David: For HVAC: repair, maintenance, and system replacement. For plumbing: general repair, water heater installation and repair, drain cleaning, and leak detection. We've been thinking about adding sewer line work but not yet.
+
+Morgan: Anything you definitely don't do?
+
+David: No commercial boilers, no industrial HVAC, no medical gas plumbing. Those are specialty areas we're not set up for. And no work in Riverside County, as mentioned.
+
+Morgan: Perfect. Any preferences on how the agent should handle callers?
+
+David: San Diego has a pretty laid-back culture. I want the agent to feel friendly and approachable, not stiff. And since we do both HVAC and plumbing, the agent should be comfortable handling calls for either service type without confusion.
+
+Morgan: Absolutely, we'll tune it for that. Thanks David, we'll get a draft configuration to you shortly.
+
+David: Great. Thanks Morgan.

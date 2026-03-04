@@ -1,0 +1,63 @@
+{
+  "account_id": "SES_003",
+  "from_version": "v1",
+  "to_version": "v2",
+  "generated_at": "2026-03-04T06:44:10.835169+00:00",
+  "summary": "3 field(s) modified; 3 field(s) added",
+  "total_changes": 6,
+  "changes": [
+    {
+      "field_path": "_metadata._confidence_flags.is_rule_based",
+      "old_value": null,
+      "new_value": true,
+      "change_type": "added",
+      "source": "onboarding",
+      "reason": "Updated during onboarding."
+    },
+    {
+      "field_path": "_metadata._confidence_flags.may_miss_config_details",
+      "old_value": null,
+      "new_value": true,
+      "change_type": "added",
+      "source": "onboarding",
+      "reason": "Updated during onboarding."
+    },
+    {
+      "field_path": "_metadata._source",
+      "old_value": null,
+      "new_value": "onboarding",
+      "change_type": "added",
+      "source": "onboarding",
+      "reason": "Updated during onboarding."
+    },
+    {
+      "field_path": "emergency_routing_rules.contacts",
+      "old_value": "[{\"name\": \"Contact 1\", \"order\": 1, \"phone\": \"305-555-0144\"}, {\"name\": \"Contact 2\", \"order\": 2, \"phone\": \"305-555-0177\"}, {\"name\": \"Contact 3\", \"order\": 3, \"phone\": \"305-555-0100\"}]",
+      "new_value": "[{\"name\": \"Contact 1\", \"order\": 1, \"phone\": \"305-555-0144\"}, {\"name\": \"Contact 2\", \"order\": 2, \"phone\": \"305-555-0177\"}, {\"name\": \"Contact 3\", \"order\": 3, \"phone\": \"305-555-0199\"}]",
+      "change_type": "modified",
+      "source": "onboarding",
+      "reason": "Phone numbers detected in onboarding transcript"
+    },
+    {
+      "field_path": "office_address",
+      "old_value": "",
+      "new_value": "0199 is the primary emergency contact in place of Tony",
+      "change_type": "added",
+      "source": "onboarding",
+      "reason": "Detected via rule-based onboarding scan"
+    },
+    {
+      "field_path": "questions_or_unknowns",
+      "old_value": "[\"Full extraction not available - set GEMINI_API_KEY for LLM-based extraction.\"]",
+      "new_value": "[\"Full extraction not available - set GEMINI_API_KEY for LLM-based extraction.\", \"Rule-based onboarding extraction used - set GEMINI_API_KEY for precise diff.\", \"Manual review recommended: routing logic, integration constraints, and transfer timeouts may not be captured.\"]",
+      "change_type": "modified",
+      "source": "onboarding",
+      "reason": "Updated during onboarding."
+    }
+  ],
+  "conflicts_resolved": [],
+  "metadata": {
+    "v1_source": "unknown",
+    "v2_source": "onboarding"
+  }
+}

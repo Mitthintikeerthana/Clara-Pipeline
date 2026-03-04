@@ -1,0 +1,71 @@
+{
+  "account_id": "CCS_005",
+  "company_name": "Coastal Comfort Systems",
+  "business_hours": {
+    "days": [
+      "Monday"
+    ],
+    "start": "",
+    "end": "",
+    "timezone": "America/Los_Angeles"
+  },
+  "office_address": "0200 first, then your direct cell 619-555-0215",
+  "services_supported": [],
+  "services_excluded": [],
+  "emergency_definition": [
+    "ppens in the mountains. For plumbing: burst pipe, sewage backup, no water supply to a structure. Gas leak is alwa",
+    "David: For HVAC: no AC when it's above ninety degrees, especially for el",
+    "e, sewage backup, no water supply to a structure. Gas leak is always an emergency regardless of what kind of",
+    "go but it happens in the mountains. For plumbing: burst pipe, sewage backup, no water supply to a structure. G"
+  ],
+  "emergency_routing_rules": {
+    "contacts": [
+      {
+        "name": "Contact 1",
+        "phone": "760-555-0100",
+        "order": 1
+      },
+      {
+        "name": "Contact 2",
+        "phone": "760-555-0100",
+        "order": 2
+      },
+      {
+        "name": "Contact 3",
+        "phone": "619-555-0200",
+        "order": 3
+      }
+    ],
+    "fallback": ""
+  },
+  "non_emergency_routing_rules": {
+    "after_hours": "",
+    "during_hours": ""
+  },
+  "call_transfer_rules": {
+    "during_hours_primary": "",
+    "timeout_rings": 4,
+    "timeout_seconds": null,
+    "retries": 2,
+    "on_transfer_fail": "",
+    "notify_dispatch_on_fail": false
+  },
+  "integration_constraints": [],
+  "special_constraints": [],
+  "after_hours_flow_summary": "",
+  "office_hours_flow_summary": "",
+  "questions_or_unknowns": [
+    "Full extraction not available - set GEMINI_API_KEY for LLM-based extraction.",
+    "Rule-based onboarding extraction used - set GEMINI_API_KEY for precise diff.",
+    "Manual review recommended: routing logic, integration constraints, and transfer timeouts may not be captured."
+  ],
+  "notes": "Extracted via rule-based fallback (no GEMINI_API_KEY). Review all fields for accuracy.",
+  "_metadata": {
+    "_source": "onboarding",
+    "_extraction_timestamp": "2026-03-04T06:44:41.424521+00:00",
+    "_confidence_flags": {
+      "is_rule_based": true,
+      "may_miss_config_details": true
+    }
+  }
+}

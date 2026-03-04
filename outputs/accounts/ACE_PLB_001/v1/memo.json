@@ -1,0 +1,65 @@
+{
+  "account_id": "ACE_PLB_001",
+  "company_name": "ACE Plumbing & HVAC",
+  "business_hours": {
+    "days": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday"
+    ],
+    "start": "",
+    "end": "",
+    "timezone": "America/Denver"
+  },
+  "office_address": "",
+  "services_supported": [],
+  "services_excluded": [],
+  "emergency_definition": [
+    "Mike: Good question. A burst pipe is always an emergency. Sewage backup in the home",
+    "s always an emergency. Sewage backup in the home. No AC when it's above a hundred degrees outside — which",
+    "s outside — which is basically every summer here. Gas leak, obviously. Complete loss of hot water for a resi",
+    "od question. A burst pipe is always an emergency. Sewage backup in the home. No AC when it's above a hundred degr"
+  ],
+  "emergency_routing_rules": {
+    "contacts": [
+      {
+        "name": "Contact 1",
+        "phone": "602-555-0142",
+        "order": 1
+      },
+      {
+        "name": "Contact 2",
+        "phone": "602-555-0198",
+        "order": 2
+      },
+      {
+        "name": "Contact 3",
+        "phone": "602-555-0100",
+        "order": 3
+      }
+    ],
+    "fallback": ""
+  },
+  "non_emergency_routing_rules": {
+    "after_hours": "",
+    "during_hours": ""
+  },
+  "call_transfer_rules": {
+    "during_hours_primary": "",
+    "timeout_rings": 4,
+    "timeout_seconds": null,
+    "retries": 2,
+    "on_transfer_fail": "",
+    "notify_dispatch_on_fail": false
+  },
+  "integration_constraints": [],
+  "special_constraints": [],
+  "after_hours_flow_summary": "",
+  "office_hours_flow_summary": "",
+  "questions_or_unknowns": [
+    "Full extraction not available - set GEMINI_API_KEY for LLM-based extraction."
+  ],
+  "notes": "Extracted via rule-based fallback (no GEMINI_API_KEY). Review all fields for accuracy."
+}

@@ -1,0 +1,78 @@
+{
+  "account_id": "ACE_PLB_001",
+  "patches": [
+    {
+      "field_path": "office_address",
+      "old_value": "",
+      "new_value": "0210 as the third emergency contact",
+      "reason": "Detected via rule-based onboarding scan",
+      "change_type": "added"
+    },
+    {
+      "field_path": "business_hours.days",
+      "old_value": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday"
+      ],
+      "new_value": [
+        "Monday"
+      ],
+      "reason": "Detected via rule-based onboarding scan",
+      "change_type": "modified"
+    },
+    {
+      "field_path": "emergency_routing_rules.contacts",
+      "old_value": [
+        {
+          "name": "Contact 1",
+          "phone": "602-555-0142",
+          "order": 1
+        },
+        {
+          "name": "Contact 2",
+          "phone": "602-555-0198",
+          "order": 2
+        },
+        {
+          "name": "Contact 3",
+          "phone": "602-555-0100",
+          "order": 3
+        }
+      ],
+      "new_value": [
+        {
+          "name": "Contact 1",
+          "phone": "602-555-0142",
+          "order": 1
+        },
+        {
+          "name": "Contact 2",
+          "phone": "602-555-0198",
+          "order": 2
+        },
+        {
+          "name": "Contact 3",
+          "phone": "602-555-0210",
+          "order": 3
+        }
+      ],
+      "reason": "Phone numbers detected in onboarding transcript",
+      "change_type": "modified"
+    }
+  ],
+  "questions_or_unknowns": [
+    "Rule-based onboarding extraction used - set GEMINI_API_KEY for precise diff.",
+    "Manual review recommended: routing logic, integration constraints, and transfer timeouts may not be captured."
+  ],
+  "_metadata": {
+    "_source": "onboarding",
+    "_extraction_timestamp": "2026-03-04T06:43:39.446754+00:00",
+    "_confidence_flags": {
+      "is_rule_based": true,
+      "may_miss_config_details": true
+    }
+  }
+}

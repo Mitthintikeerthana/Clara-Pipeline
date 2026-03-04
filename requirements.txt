@@ -16,4 +16,4 @@ python-dotenv>=1.0.0
 # Install separately if you plan to transcribe audio files:
 #   pip install openai-whisper
 # Already installed on this machine.
-openai-whisper>=20231117
+# openai-whisper>=20231117  # local only — not needed for dashboard/web deployment

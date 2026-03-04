@@ -1,0 +1,66 @@
+CLARA DEMO CALL TRANSCRIPT
+Account: ACE_PLB_001
+Date: 2025-01-14
+Participants: Sarah Chen (Clara Sales), Mike Torres (Owner, ACE Plumbing & HVAC)
+
+---
+
+Sarah: Hi Mike, thanks so much for making time today. I'm Sarah with Clara. Before I walk you through how our AI answering works, can you tell me a bit about ACE Plumbing & HVAC?
+
+Mike: Sure. I'm Mike Torres, I own ACE Plumbing & HVAC. We're based out of Phoenix, Arizona. We've been around for about eleven years doing residential and commercial plumbing and HVAC work throughout the greater Phoenix metro area.
+
+Sarah: That's great. How big is the team?
+
+Mike: We've got nine field techs, two in the office. My office manager, Jessica, handles most of the incoming calls during the day.
+
+Sarah: Perfect. So let me start with business hours — when are you typically open?
+
+Mike: Monday through Friday, seven AM to six PM, and Saturdays from eight to three. We're Mountain Time here in Phoenix.
+
+Sarah: And are you closed Sunday?
+
+Mike: Yeah, Sundays we're closed. We don't do routine calls on Sunday, but we handle emergencies obviously.
+
+Sarah: Speaking of emergencies — how do you define an emergency for your business?
+
+Mike: Good question. A burst pipe is always an emergency. Sewage backup in the home. No AC when it's above a hundred degrees outside — which is basically every summer here. Gas leak, obviously. Complete loss of hot water for a residential customer. No heat when temps drop below freezing. Those are the biggies.
+
+Sarah: And when an emergency comes in after hours, who do we call?
+
+Mike: First call goes to our on-call technician. Right now that rotation changes weekly, but Dave Reyes is on-call more often than not. His cell is 602-555-0142. If Dave doesn't pick up within three or four rings, call Marcus Hill at 602-555-0198. If neither of them answer, leave a voicemail for both and tell the customer we'll call them back within fifteen minutes.
+
+Sarah: Great. And for non-emergency calls that come in after hours?
+
+Mike: Take their name and number, let them know we'll call back first thing the next morning. Don't make any promises about same-day visits unless they hear directly from me.
+
+Sarah: And during business hours — how should we route inbound calls?
+
+Mike: Try to transfer to Jessica first, she's at extension 101 on our main line. If she doesn't pick up, the call should go to a voicemail we check every thirty minutes. For service request calls specifically, Jessica logs everything into ServiceTrade.
+
+Sarah: Any constraints or rules around ServiceTrade we should know about?
+
+Mike: Yes, a few important ones. Never, ever create a sprinkler job in ServiceTrade — we don't do sprinkler systems, and I don't want that in our system. Also don't book any job that's more than sixty miles from central Phoenix without talking to me first — those need my approval.
+
+Sarah: Noted. What's the main office address?
+
+Mike: Four-five-two-one West Washington Street, Phoenix, Arizona, eight-five-zero-zero-three.
+
+Sarah: And services you want the AI to specifically tell callers you do NOT offer?
+
+Mike: No sprinkler systems, no pool equipment, no appliance repair. We get calls for all three of those and it wastes everyone's time.
+
+Sarah: Perfect. Anything else you want callers to know or that the agent should handle differently?
+
+Mike: One thing — if someone calls asking about commercial kitchen equipment, tell them we don't handle that either. We used to and it caused headaches with ServiceTrade.
+
+Sarah: I'll make sure that's in the configuration. What's your main office phone number for transfers?
+
+Mike: Main line is 602-555-0100. Jessica's direct extension, like I said, is 101.
+
+Sarah: Got it. Well, I think we have everything we need to put together a draft configuration for you. We'll send it over for your review within two business days. Sound good?
+
+Mike: Sounds perfect. Looking forward to seeing it.
+
+Sarah: Great, thanks Mike. Have a good one.
+
+Mike: You too. Bye.

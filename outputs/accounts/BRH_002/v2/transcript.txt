@@ -1,0 +1,62 @@
+CLARA ONBOARDING CALL TRANSCRIPT
+Account: BRH_002
+Date: 2025-02-05
+Participants: Alex Rivera (Clara Onboarding), Patricia Holloway (Owner, Blue Ridge Heating & Air)
+
+---
+
+Alex: Hi Patricia, welcome to your onboarding call. Excited to get you live. I have your demo configuration pulled up. Ready to review?
+
+Patricia: Yes, let's do it. I have a couple of updates actually.
+
+Alex: Perfect, let's go through everything. Business hours — Monday through Friday, eight to five, Eastern Time. Correct?
+
+Patricia: Almost. We've decided to add Saturday hours for the summer months — June, July, and August. During those months we'll be open Saturday eight AM to noon. The rest of the year Saturday is closed. Can you handle seasonal hours?
+
+Alex: We can flag that and note it in the configuration. The agent will operate on standard weekday hours and our team can manually update the Saturday availability when summer starts. I'll add a note that June-August, Saturdays are 8AM-12PM Eastern.
+
+Patricia: Perfect. That works.
+
+Alex: Now for emergency contacts. We have Brandon Walsh at 704-555-0231 as primary, Angela Reeves at 704-555-0267 as secondary, and then a text to you at 704-555-0190 as the fallback.
+
+Patricia: I need to update that. Brandon Walsh left the company last month. He's been replaced by Tyler Ross. Tyler's cell is 704-555-0312. He's now our primary emergency contact.
+
+Alex: Got it. Removing Brandon Walsh, adding Tyler Ross at 704-555-0312 as the new primary emergency contact. Angela Reeves stays as secondary?
+
+Patricia: Yes, Angela stays at 704-555-0267, order two. And the text to me at 704-555-0190 stays as the fallback.
+
+Alex: Perfect. During-hours routing — main office 704-555-0200, message if no answer. That's still correct?
+
+Patricia: Still correct, yes.
+
+Alex: ServiceTitan — mark jobs as residential or commercial accurately, no new construction. Any additions?
+
+Patricia: Yes. I want a note added — whenever a caller sounds elderly, like over sixty-five or mentions age, add a priority flag in the notes saying "senior priority." We fast-track those customers. The AI won't book anything in ServiceTitan obviously, but I want the notes the agent records to include that flag so when our team follows up they know.
+
+Alex: Understood. I'll add an instruction that when a caller identifies as a senior or elderly, the agent notes "SENIOR PRIORITY" in the issue summary. That'll carry through to the message taken.
+
+Patricia: Perfect.
+
+Alex: Services — heating and AC repair, installation, maintenance agreements, replacements, indoor air quality, duct cleaning. Any changes?
+
+Patricia: We've added commercial refrigeration maintenance. We started doing that about six months ago. Add that to the services list.
+
+Alex: Adding commercial refrigeration maintenance. So now you do take those calls.
+
+Patricia: Yes! Big change from the demo. We've invested in the training and equipment.
+
+Alex: Got it. Any new constraints or exclusions?
+
+Patricia: We still don't do new construction, chiller systems, or industrial work. And commercial refrigeration for restaurants only — we don't service grocery store walk-ins or large industrial freezers. Just light commercial refrigeration like small walk-ins, reach-ins in restaurants. I'll leave it as you have it but wanted to add that context.
+
+Alex: I'll note "light commercial refrigeration only — no industrial cold storage" to the constraints.
+
+Patricia: That's exactly right.
+
+Alex: Anything else before we finalize?
+
+Patricia: I think that's it. The transition from Brandon to Tyler is the most critical change. Make sure that's solid before we go live.
+
+Alex: It is. Tyler Ross at 704-555-0312 is locked in as primary. We'll have you live by end of week.
+
+Patricia: Wonderful. Thanks Alex.

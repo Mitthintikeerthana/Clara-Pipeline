@@ -1,0 +1,72 @@
+{
+  "account_id": "SES_003",
+  "company_name": "Sunrise Electrical Services",
+  "business_hours": {
+    "days": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday"
+    ],
+    "start": "",
+    "end": "",
+    "timezone": "America/New_York"
+  },
+  "office_address": "0199 is the primary emergency contact in place of Tony",
+  "services_supported": [],
+  "services_excluded": [],
+  "emergency_definition": [
+    "d to the main panel — we want to know about that. Sparking wires, burning smell, anything that suggests an a"
+  ],
+  "emergency_routing_rules": {
+    "contacts": [
+      {
+        "name": "Contact 1",
+        "phone": "305-555-0144",
+        "order": 1
+      },
+      {
+        "name": "Contact 2",
+        "phone": "305-555-0177",
+        "order": 2
+      },
+      {
+        "name": "Contact 3",
+        "phone": "305-555-0199",
+        "order": 3
+      }
+    ],
+    "fallback": ""
+  },
+  "non_emergency_routing_rules": {
+    "after_hours": "",
+    "during_hours": ""
+  },
+  "call_transfer_rules": {
+    "during_hours_primary": "",
+    "timeout_rings": 4,
+    "timeout_seconds": null,
+    "retries": 2,
+    "on_transfer_fail": "",
+    "notify_dispatch_on_fail": false
+  },
+  "integration_constraints": [],
+  "special_constraints": [],
+  "after_hours_flow_summary": "",
+  "office_hours_flow_summary": "",
+  "questions_or_unknowns": [
+    "Full extraction not available - set GEMINI_API_KEY for LLM-based extraction.",
+    "Rule-based onboarding extraction used - set GEMINI_API_KEY for precise diff.",
+    "Manual review recommended: routing logic, integration constraints, and transfer timeouts may not be captured."
+  ],
+  "notes": "Extracted via rule-based fallback (no GEMINI_API_KEY). Review all fields for accuracy.",
+  "_metadata": {
+    "_source": "onboarding",
+    "_extraction_timestamp": "2026-03-04T06:44:10.444690+00:00",
+    "_confidence_flags": {
+      "is_rule_based": true,
+      "may_miss_config_details": true
+    }
+  }
+}

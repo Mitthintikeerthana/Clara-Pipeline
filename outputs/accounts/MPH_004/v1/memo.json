@@ -1,0 +1,66 @@
+{
+  "account_id": "MPH_004",
+  "company_name": "Mountain Peak HVAC",
+  "business_hours": {
+    "days": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday"
+    ],
+    "start": "",
+    "end": "",
+    "timezone": "America/Denver"
+  },
+  "office_address": "",
+  "services_supported": [],
+  "services_excluded": [],
+  "emergency_definition": [
+    "Jake: No heat when it's below twenty degrees Fahrenheit outside",
+    "ercial clients who have buildings full of people. Carbon monoxide alarm triggered. And complete system failure for",
+    "nheit outside. No AC when it's above ninety-five. Boiler failure — especially for commercial clients who have buil",
+    "l of people. Carbon monoxide alarm triggered. And complete system failure for any commercial client during operating hours"
+  ],
+  "emergency_routing_rules": {
+    "contacts": [
+      {
+        "name": "Contact 1",
+        "phone": "720-555-0156",
+        "order": 1
+      },
+      {
+        "name": "Contact 2",
+        "phone": "720-555-0178",
+        "order": 2
+      },
+      {
+        "name": "Contact 3",
+        "phone": "720-555-0100",
+        "order": 3
+      }
+    ],
+    "fallback": ""
+  },
+  "non_emergency_routing_rules": {
+    "after_hours": "",
+    "during_hours": ""
+  },
+  "call_transfer_rules": {
+    "during_hours_primary": "",
+    "timeout_rings": 4,
+    "timeout_seconds": null,
+    "retries": 2,
+    "on_transfer_fail": "",
+    "notify_dispatch_on_fail": false
+  },
+  "integration_constraints": [],
+  "special_constraints": [],
+  "after_hours_flow_summary": "",
+  "office_hours_flow_summary": "",
+  "questions_or_unknowns": [
+    "Full extraction not available - set GEMINI_API_KEY for LLM-based extraction."
+  ],
+  "notes": "Extracted via rule-based fallback (no GEMINI_API_KEY). Review all fields for accuracy."
+}

@@ -1,0 +1,42 @@
+{
+  "account_id": "ACE_PLB_001",
+  "pipeline": "B",
+  "version": "v2",
+  "lifecycle_stage": "onboarding_complete",
+  "input_file": "c:\\Users\\mitti\\clara-pipeline\\inputs\\onboarding\\onboarding_001.txt",
+  "form_file": null,
+  "issue_url": "https://github.com/Mitthintikeerthana/Clara-Pipeline/issues/16",
+  "total_changes": 7,
+  "generated_at": "2026-03-04T06:43:43.060680+00:00",
+  "validation": {
+    "account_id": "ACE_PLB_001",
+    "is_valid": true,
+    "is_complete": false,
+    "is_demo_derived": false,
+    "is_onboarding_confirmed": true,
+    "errors": [],
+    "warnings": [
+      "emergency_routing_rules.fallback is empty",
+      "call_transfer_rules.during_hours_primary is empty - daytime calls won't transfer",
+      "3 unknown(s) flagged: Full extraction not available - set GEMINI_API_KEY for LLM-based extraction., Rule-based onboarding extraction used - set GEMINI_API_KEY for precise diff., Manual review recommended: routing logic, integration constraints, and transfer timeouts may not be captured.",
+      "No services_supported defined"
+    ],
+    "info": [
+      "This configuration is onboarding-confirmed"
+    ],
+    "error_count": 0,
+    "warning_count": 4
+  },
+  "completeness_score": {
+    "business_hours": 50,
+    "emergency_routing": 60,
+    "call_transfer": 40,
+    "services": 0,
+    "constraints": 50,
+    "overall": 43.5
+  },
+  "source": "onboarding",
+  "conflicts_resolved": [],
+  "form_conflicts": [],
+  "v1_source": "demo"
+}

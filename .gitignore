@@ -20,3 +20,11 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Raw meeting recordings
+2026-01-14*/
+*.m4a
+*.mp4
+
+# Temp files
+pr_body.txt

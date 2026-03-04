@@ -32,16 +32,16 @@ def _load_manifest() -> dict:
     with manifest_path.open(encoding="utf-8") as fh:
         return json.load(fh)
 
-def _run_a_safe(input_path: str, account_id: str) -> dict:
+def _run_a_safe(input_path: str, account_id: str, force: bool = False) -> dict:
     from scripts.pipeline_a import run_pipeline_a
     start = time.monotonic()
     try:
-        result = run_pipeline_a(input_path, account_id)
+        result = run_pipeline_a(input_path, account_id, force=force)
         elapsed = time.monotonic() - start
         return {
             "account_id": account_id,
             "pipeline": "A",
-            "status": "success",
+            "status": "skipped" if result.get("skipped") else "success",
             "elapsed_sec": round(elapsed, 2),
             "company": result["memo"].get("company_name", "-"),
             "output_dir": result["output_dir"],
@@ -62,16 +62,21 @@ def _run_a_safe(input_path: str, account_id: str) -> dict:
             "error": str(exc),
         }
 
-def _run_b_safe(input_path: str, account_id: str) -> dict:
+def _run_b_safe(
+    input_path: str,
+    account_id: str,
+    form_path: str | None = None,
+    force: bool = False,
+) -> dict:
     from scripts.pipeline_b import run_pipeline_b
     start = time.monotonic()
     try:
-        result = run_pipeline_b(input_path, account_id)
+        result = run_pipeline_b(input_path, account_id, form_path=form_path, force=force)
         elapsed = time.monotonic() - start
         return {
             "account_id": account_id,
             "pipeline": "B",
-            "status": "success",
+            "status": "skipped" if result.get("skipped") else "success",
             "elapsed_sec": round(elapsed, 2),
             "company": result["v2_memo"].get("company_name", "-"),
             "output_dir": result["output_dir"],
@@ -92,10 +97,48 @@ def _run_b_safe(input_path: str, account_id: str) -> dict:
             "error": str(exc),
         }
 
+def _log_result(result: dict, pipeline: str) -> None:
+    if result["status"] in ("success", "skipped"):
+        if pipeline == "A":
+            logger.info("  %s %s - %s", result["status"].upper(), result["account_id"], result["company"])
+        else:
+            logger.info("  %s %s - %d changes", result["status"].upper(), result["account_id"], result.get("total_changes", 0))
+    else:
+        logger.warning("  FAIL %s - %s", result["account_id"], result["error"])
+
+def _run_demo_batch(accounts: list[dict], force: bool) -> list[dict]:
+    logger.info("=== Running Pipeline A for %d accounts ===", len(accounts))
+    results = []
+    for entry in accounts:
+        account_id = entry["account_id"]
+        demo_file = INPUTS_DIR / "demo" / entry["demo_file"]
+        logger.info("-> Pipeline A: %s (%s)", account_id, demo_file.name)
+        result = _run_a_safe(str(demo_file), account_id, force=force)
+        results.append(result)
+        _log_result(result, "A")
+    return results
+
+def _run_onboarding_batch(accounts: list[dict], force: bool) -> list[dict]:
+    logger.info("=== Running Pipeline B for %d accounts ===", len(accounts))
+    results = []
+    for entry in accounts:
+        account_id = entry["account_id"]
+        onboarding_file = INPUTS_DIR / "onboarding" / entry["onboarding_file"]
+        form_file = entry.get("onboarding_form_file")
+        form_path = str(INPUTS_DIR / "forms" / form_file) if form_file else None
+        logger.info("-> Pipeline B: %s (%s)", account_id, onboarding_file.name)
+        if form_path:
+            logger.info("   + form: %s", form_file)
+        result = _run_b_safe(str(onboarding_file), account_id, form_path=form_path, force=force)
+        results.append(result)
+        _log_result(result, "B")
+    return results
+
 def run_batch(
     run_demo: bool = True,
     run_onboarding: bool = True,
     filter_account: str | None = None,
+    force: bool = False,
 ) -> dict:
     manifest = _load_manifest()
     accounts: list[dict] = manifest.get("accounts", [])
@@ -105,48 +148,18 @@ def run_batch(
         if not accounts:
             raise ValueError(f"Account '{filter_account}' not found in manifest.")
 
-    results_a: list[dict] = []
-    results_b: list[dict] = []
-
-    if run_demo:
-        logger.info("=== Running Pipeline A for %d accounts ===", len(accounts))
-        for entry in accounts:
-            account_id = entry["account_id"]
-            demo_file = INPUTS_DIR / "demo" / entry["demo_file"]
-            logger.info("-> Pipeline A: %s (%s)", account_id, demo_file.name)
-            result = _run_a_safe(str(demo_file), account_id)
-            results_a.append(result)
-            if result["status"] == "success":
-                logger.info("  OK %s - %s", account_id, result["company"])
-            else:
-                logger.warning("  FAIL %s - %s", account_id, result["error"])
-
-    if run_onboarding:
-        logger.info("=== Running Pipeline B for %d accounts ===", len(accounts))
-        for entry in accounts:
-            account_id = entry["account_id"]
-            onboarding_file = INPUTS_DIR / "onboarding" / entry["onboarding_file"]
-            logger.info("-> Pipeline B: %s (%s)", account_id, onboarding_file.name)
-            result = _run_b_safe(str(onboarding_file), account_id)
-            results_b.append(result)
-            if result["status"] == "success":
-                logger.info(
-                    "  OK %s - %d changes", account_id, result.get("total_changes", 0)
-                )
-            else:
-                logger.warning("  FAIL %s - %s", account_id, result["error"])
+    results_a = _run_demo_batch(accounts, force) if run_demo else []
+    results_b = _run_onboarding_batch(accounts, force) if run_onboarding else []
 
     all_results = results_a + results_b
-    successes = sum(1 for r in all_results if r["status"] == "success")
-    failures = sum(1 for r in all_results if r["status"] == "failed")
-
     summary = {
         "run_at": datetime.now(timezone.utc).isoformat(),
         "total_accounts": len(accounts),
         "pipeline_a_results": results_a,
         "pipeline_b_results": results_b,
-        "successes": successes,
-        "failures": failures,
+        "successes": sum(1 for r in all_results if r["status"] == "success"),
+        "skipped": sum(1 for r in all_results if r["status"] == "skipped"),
+        "failures": sum(1 for r in all_results if r["status"] == "failed"),
     }
 
     summary_path = LOGS_DIR / "batch_summary.json"
@@ -155,6 +168,28 @@ def run_batch(
     logger.info("Batch summary written to %s", summary_path)
 
     return summary
+
+def _status_label(status: str) -> str:
+    if status == "success":
+        return "[ok]"
+    if status == "skipped":
+        return "[skip]"
+    return "[FAIL]"
+
+def _print_a_table(results: list[dict]) -> None:
+    print("\n  Pipeline A (Demo -> v1)")
+    print(f"  {'Account':<20} {'Company':<28} {'Status':<8} {'Time':>6}s")
+    print(f"  {'-'*20} {'-'*28} {'-'*8} {'-'*7}")
+    for r in results:
+        print(f"  {r['account_id']:<20} {r['company'][:27]:<28} {_status_label(r['status']):<8} {r['elapsed_sec']:>7.1f}")
+
+def _print_b_table(results: list[dict]) -> None:
+    print("\n  Pipeline B (Onboarding -> v2)")
+    print(f"  {'Account':<20} {'Company':<28} {'Status':<8} {'Changes':>8}")
+    print(f"  {'-'*20} {'-'*28} {'-'*8} {'-'*8}")
+    for r in results:
+        changes = r.get("total_changes", "-")
+        print(f"  {r['account_id']:<20} {r['company'][:27]:<28} {_status_label(r['status']):<8} {str(changes):>8}")
 
 def _main() -> None:
     _setup_root_logging()
@@ -169,15 +204,17 @@ def _main() -> None:
     parser.add_argument(
         "--account", metavar="ACCOUNT_ID", help="Run for a single account only"
     )
+    parser.add_argument(
+        "--force", action="store_true",
+        help="Re-run even if outputs already exist (overrides idempotency)"
+    )
     args = parser.parse_args()
 
-    run_demo = not args.onboarding_only
-    run_onboarding = not args.demo_only
-
     summary = run_batch(
-        run_demo=run_demo,
-        run_onboarding=run_onboarding,
+        run_demo=not args.onboarding_only,
+        run_onboarding=not args.demo_only,
         filter_account=args.account,
+        force=args.force,
     )
 
     print("\n" + "=" * 60)
@@ -185,23 +222,12 @@ def _main() -> None:
     print("=" * 60)
 
     if summary["pipeline_a_results"]:
-        print("\n  Pipeline A (Demo -> v1)")
-        print(f"  {'Account':<20} {'Company':<28} {'Status':<8} {'Time':>6}s")
-        print(f"  {'-'*20} {'-'*28} {'-'*8} {'-'*7}")
-        for r in summary["pipeline_a_results"]:
-            status = "[ok]" if r["status"] == "success" else "[FAIL]"
-            print(f"  {r['account_id']:<20} {r['company'][:27]:<28} {status:<8} {r['elapsed_sec']:>7.1f}")
+        _print_a_table(summary["pipeline_a_results"])
 
     if summary["pipeline_b_results"]:
-        print("\n  Pipeline B (Onboarding -> v2)")
-        print(f"  {'Account':<20} {'Company':<28} {'Status':<8} {'Changes':>8}")
-        print(f"  {'-'*20} {'-'*28} {'-'*8} {'-'*8}")
-        for r in summary["pipeline_b_results"]:
-            status = "[ok]" if r["status"] == "success" else "[FAIL]"
-            changes = r.get("total_changes", "-")
-            print(f"  {r['account_id']:<20} {r['company'][:27]:<28} {status:<8} {str(changes):>8}")
+        _print_b_table(summary["pipeline_b_results"])
 
-    print(f"\n  Successes: {summary['successes']}  |  Failures: {summary['failures']}")
+    print(f"\n  Successes: {summary['successes']}  |  Skipped: {summary['skipped']}  |  Failures: {summary['failures']}")
     print("=" * 60)
 
     if summary["failures"] > 0:

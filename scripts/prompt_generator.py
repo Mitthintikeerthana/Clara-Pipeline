@@ -39,6 +39,9 @@ def _fmt_emergency_triggers(triggers: list[str]) -> str:
 def _fmt_constraints(constraints: list[str]) -> str:
     return "\n".join(f"  - {c}" for c in constraints) if constraints else ""
 
+def _fmt_special_constraints(constraints: list[str]) -> str:
+    return "\n".join(f"  - {c}" for c in constraints) if constraints else "  (none on file)"
+
 _SYSTEM_PROMPT_TEMPLATE = """\
 # IDENTITY
 You are Clara, a professional AI phone answering agent for {company_name}.
@@ -59,6 +62,9 @@ Business Hours: {hours_formatted}
 
 # OPERATIONAL CONSTRAINTS
 {constraints_formatted}
+
+# SPECIAL ROUTING RULES
+{special_constraints_formatted}
 
 ---
 # DURING BUSINESS HOURS FLOW
@@ -81,12 +87,12 @@ When the office is open:
 4. TRANSFER OR ROUTE
    - "Let me connect you with our team. Please hold for just a moment."
    - Attempt transfer to: {during_hours_primary}
-   - If no answer after {timeout_rings} rings: proceed to step 5.
+   - If no answer after {transfer_timeout_desc}: proceed to step 5.
 
 5. FALLBACK IF TRANSFER FAILS
    - "I wasn't able to connect you right now, but I've captured all your details."
    - "Someone from our team will call you back within the hour. Is that okay?"
-   - Confirm their callback number.
+   - Confirm their callback number.{dispatch_note}
 
 6. ASK IF THEY NEED ANYTHING ELSE
    - "Is there anything else I can help you with today?"
@@ -104,49 +110,56 @@ When the office is closed:
    "Thank you for calling {company_name}. Our office is currently closed - our normal hours
    are {hours_formatted}. This is Clara, the after-hours answering service."
 
-2. ASK PURPOSE / CHECK FOR EMERGENCY
-   "Are you experiencing an emergency that needs immediate attention tonight?"
+2. ASK PURPOSE
+   - "May I ask what's going on tonight? How can I help you?"
+   - Listen carefully to what the caller describes.
+   - Do NOT immediately ask if it's an emergency - let them explain first.
 
-3A. IF EMERGENCY - Collect info FIRST, then transfer:
-   
-   a) COLLECT INFO IMMEDIATELY:
+3. CONFIRM EMERGENCY
+   - Based on their description, assess urgency.
+   - "Just to make sure I get you the right help - is this something that needs
+     immediate attention tonight, or can it wait until business hours?"
+   - If they describe a known emergency trigger (see EMERGENCY TRIGGERS below),
+     treat as emergency immediately without requiring further confirmation.
+
+4A. IF EMERGENCY - Collect info FIRST, then transfer:
+
+   a) COLLECT NAME, NUMBER, AND ADDRESS IMMEDIATELY:
       - "Can I get your full name?"
       - "What's the best callback number?"
-      - "What's the service address?"
+      - "What's the service address where we need to send someone?"
       - Briefly confirm the emergency nature.
-   
+
    b) ATTEMPT TRANSFER:
       - "I'm going to connect you with our on-call team right away."
       - Attempt emergency transfer in order:
 {emergency_contacts_formatted}
-   
+
    c) IF TRANSFER SUCCEEDS:
       - Stay on hold, confirm handoff to on-call technician.
-   
+
    d) IF ALL TRANSFERS FAIL:
       - "{transfer_fail_message}"
       - "I have sent an urgent alert to our on-call team with your information.
          Someone will call you back within 15 minutes.
          If this is a life-threatening emergency, please call 9-1-1 immediately."
 
-3B. IF NON-EMERGENCY:
-   
-   a) SET EXPECTATIONS:
-      - "Our office opens {next_open_hint}. I can take a message for a callback."
-   
-   b) COLLECT DETAILS:
+4B. IF NON-EMERGENCY:
+
+   a) COLLECT DETAILS:
       - Full name
       - Best callback number
       - Service address (if applicable)
       - Brief description of the issue
-   
-   c) CONFIRM FOLLOW-UP:
-      - "Perfect. Someone will call you back first thing in the morning."
 
-4. ASK IF THEY NEED ANYTHING ELSE
+   b) CONFIRM FOLLOW-UP DURING BUSINESS HOURS:
+      - "Our office opens {next_open_hint}. I've got all your details and
+         someone will call you back first thing when we open."
+
+5. ASK IF THEY NEED ANYTHING ELSE
    - "Is there anything else I can help you with tonight?"
 
-5. CLOSE CALL
+6. CLOSE CALL
    - "Thank you for calling {company_name}. Stay safe and have a good night."
    - Wait for caller to hang up first.
 
@@ -169,7 +182,6 @@ The following situations ALWAYS qualify as emergencies requiring immediate escal
 """
 
 def generate_system_prompt(memo: dict, version: str = "v1") -> str:
-    bh = memo.get("business_hours", {})
     er = memo.get("emergency_routing_rules", {})
     ct = memo.get("call_transfer_rules", {})
     ne = memo.get("non_emergency_routing_rules", {})
@@ -183,9 +195,17 @@ def generate_system_prompt(memo: dict, version: str = "v1") -> str:
     exclusions_text = _fmt_services(exclusions) if exclusions else "  (none specified)"
 
     company = memo.get("company_name", "our company")
-    fallback = er.get("fallback", "")
-    if not fallback:
-        fallback = f"I was unable to reach our on-call team."
+    fallback = er.get("fallback", "") or "I was unable to reach our on-call team."
+
+    timeout_seconds = ct.get("timeout_seconds")
+    timeout_rings = ct.get("timeout_rings", 4)
+    transfer_timeout_desc = f"{timeout_seconds} seconds" if timeout_seconds else f"{timeout_rings} rings"
+
+    dispatch_note = (
+        "\n   - An automatic dispatch alert will be sent if all transfers fail."
+        if ct.get("notify_dispatch_on_fail")
+        else ""
+    )
 
     prompt = _SYSTEM_PROMPT_TEMPLATE.format(
         company_name=company,
@@ -194,10 +214,12 @@ def generate_system_prompt(memo: dict, version: str = "v1") -> str:
         services_formatted=_fmt_services(memo.get("services_supported", [])),
         exclusions_formatted=exclusions_text,
         constraints_formatted=constraints_text,
+        special_constraints_formatted=_fmt_special_constraints(memo.get("special_constraints", [])),
         during_hours_primary=ct.get("during_hours_primary", "(office main line)"),
-        timeout_rings=ct.get("timeout_rings", 4),
+        transfer_timeout_desc=transfer_timeout_desc,
         emergency_contacts_formatted=_fmt_emergency_contacts(er.get("contacts", [])),
         transfer_fail_message=fallback,
+        dispatch_note=dispatch_note,
         emergency_triggers_formatted=_fmt_emergency_triggers(memo.get("emergency_definition", [])),
         non_emergency_after_hours=ne.get(
             "after_hours",
@@ -269,6 +291,7 @@ def generate_agent_spec(memo: dict, version: str = "v1") -> dict:
                 er["contacts"][1]["phone"] if len(er.get("contacts", [])) > 1 else ""
             ),
             "daytime_transfer_number": ct.get("during_hours_primary", ""),
+            "special_constraints": memo.get("special_constraints", []),
         },
 
         "tool_invocation_placeholders": [
@@ -299,7 +322,9 @@ def generate_agent_spec(memo: dict, version: str = "v1") -> dict:
             "during_hours": {
                 "primary_number": ct.get("during_hours_primary", ""),
                 "timeout_rings": ct.get("timeout_rings", 4),
+                "timeout_seconds": ct.get("timeout_seconds"),
                 "retries": ct.get("retries", 1),
+                "notify_dispatch_on_fail": ct.get("notify_dispatch_on_fail", False),
                 "on_fail": ct.get(
                     "on_transfer_fail",
                     "Take message and promise callback within one hour.",

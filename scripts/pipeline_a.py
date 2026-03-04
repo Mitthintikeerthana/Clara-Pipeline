@@ -17,7 +17,7 @@ from scripts.extractor import extract_memo
 from scripts.prompt_generator import build_all_outputs
 from scripts.schema_validator import validate_account_memo, get_completeness_score
 from scripts.task_tracker import create_issue
-from scripts.utils.storage import save_json, save_text
+from scripts.utils.storage import save_json, save_text, load_json, load_text
 
 def _setup_logging(account_id: str) -> None:
     log_file = LOGS_DIR / f"{account_id}_pipeline_a.log"
@@ -52,9 +52,30 @@ def _ingest(input_path: Path) -> str:
         f"Accepted: {TEXT_EXTENSIONS | AUDIO_EXTENSIONS}"
     )
 
-def run_pipeline_a(input_path: str | Path, account_id: str) -> dict:
+def run_pipeline_a(input_path: str | Path, account_id: str, force: bool = False) -> dict:
     input_path = Path(input_path)
     _setup_logging(account_id)
+
+    existing_memo = load_json(account_id, "memo.json", version="v1")
+    if existing_memo is not None and not force:
+        logger.info(
+            "v1 outputs already exist for %s - skipping (use --force to re-run).", account_id
+        )
+        existing_spec = load_json(account_id, "agent_spec.json", version="v1") or {}
+        existing_prompt = load_text(account_id, "agent_prompt.txt", version="v1") or ""
+        existing_meta = load_json(account_id, "pipeline_meta.json", version="v1") or {}
+        return {
+            "account_id": account_id,
+            "memo": existing_memo,
+            "agent_spec": existing_spec,
+            "system_prompt": existing_prompt,
+            "output_dir": str(OUTPUTS_DIR / account_id / "v1"),
+            "issue_url": existing_meta.get("issue_url"),
+            "validation": None,
+            "completeness_score": existing_meta.get("completeness_score", {}),
+            "skipped": True,
+        }
+
     logger.info("=== Pipeline A starting: %s -> %s ===", input_path.name, account_id)
 
     transcript = _ingest(input_path)
@@ -94,6 +115,7 @@ def run_pipeline_a(input_path: str | Path, account_id: str) -> dict:
         "account_id": account_id,
         "pipeline": "A",
         "version": "v1",
+        "lifecycle_stage": "demo_complete",
         "input_file": str(input_path),
         "issue_url": issue_url,
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -128,9 +150,18 @@ def _main() -> None:
     parser.add_argument(
         "--account_id", required=True, help="Unique account identifier, e.g. ACE_PLB_001"
     )
+    parser.add_argument(
+        "--force", action="store_true", help="Re-run even if v1 outputs already exist"
+    )
     args = parser.parse_args()
 
-    result = run_pipeline_a(args.input, args.account_id)
+    result = run_pipeline_a(args.input, args.account_id, force=args.force)
+
+    if result.get("skipped"):
+        print(f"\n[skip] v1 already exists for {result['account_id']} (use --force to re-run)")
+        print(f"  Company    : {result['memo'].get('company_name', '-')}")
+        print(f"  Outputs    : {result['output_dir']}")
+        return
 
     print("\n[ok] Pipeline A complete")
     print(f"  Account ID : {result['account_id']}")

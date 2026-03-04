@@ -23,6 +23,7 @@ def _empty_memo(account_id: str) -> dict:
         },
         "office_address": "",
         "services_supported": [],
+        "services_excluded": [],
         "emergency_definition": [],
         "emergency_routing_rules": {
             "contacts": [],
@@ -35,10 +36,13 @@ def _empty_memo(account_id: str) -> dict:
         "call_transfer_rules": {
             "during_hours_primary": "",
             "timeout_rings": 4,
+            "timeout_seconds": None,
             "retries": 2,
             "on_transfer_fail": "",
+            "notify_dispatch_on_fail": False,
         },
         "integration_constraints": [],
+        "special_constraints": [],
         "after_hours_flow_summary": "",
         "office_hours_flow_summary": "",
         "questions_or_unknowns": [],
@@ -100,10 +104,13 @@ Return a single valid JSON object with EXACTLY this structure:
   "call_transfer_rules": {{
     "during_hours_primary": "phone or extension for daytime transfers",
     "timeout_rings": 4,
+    "timeout_seconds": null,
     "retries": 1,
-    "on_transfer_fail": "what to do if transfer fails"
+    "on_transfer_fail": "what to do if transfer fails",
+    "notify_dispatch_on_fail": false
   }},
-  "integration_constraints": ["constraint1", "constraint2"],
+  "integration_constraints": ["e.g. never create jobs in ServiceTrade for X"],
+  "special_constraints": ["service-specific or operational routing rules, e.g. all sprinkler emergencies go directly to phone tree"],
   "after_hours_flow_summary": "one-sentence summary of after-hours call handling",
   "office_hours_flow_summary": "one-sentence summary of business-hours call handling",
   "questions_or_unknowns": [
@@ -134,10 +141,16 @@ CONTEXT: The onboarding call is CONFIGURATION-FOCUSED. This is where:
 - Time zones are finalized
 - Emergency definitions are clearly defined
 - After-hours routing logic is specified
-- Transfer timeouts are decided
-- Fallback logic is clarified
-- Integration rules are confirmed
-- Special constraints are introduced
+- Transfer timeouts are decided (may be in seconds, e.g. "60 seconds" -> timeout_seconds: 60)
+- Fallback logic is clarified (e.g. "if transfer fails, notify dispatch" -> notify_dispatch_on_fail: true)
+- Integration rules are confirmed (e.g. "never create sprinkler jobs in ServiceTrade")
+- Special constraints are introduced (e.g. "all emergency sprinkler calls go directly to the phone tree",
+  "non-emergency extinguisher calls can be collected after hours without transfer")
+
+NEW FIELDS TO WATCH FOR:
+- call_transfer_rules.timeout_seconds: if a specific timeout in seconds is stated
+- call_transfer_rules.notify_dispatch_on_fail: true if dispatch must be notified when all transfers fail
+- special_constraints: service-specific or operational routing rules not covered by standard flow
 
 EXISTING V1 MEMO (demo-derived, may have incomplete assumptions):
 \"\"\"
@@ -361,21 +374,33 @@ def _get_nested(obj: dict, path: str) -> Any:
         obj = obj.get(key)
     return obj
 
+def _is_meaningful(val: Any) -> bool:
+    return val is not None and val != "" and val != [] and val != {}
+
+
 def apply_patches(v1_memo: dict, patch_result: dict) -> dict:
     import copy
     v2 = copy.deepcopy(v1_memo)
+    source = patch_result.get("_metadata", {}).get("_source", "onboarding")
+
     for patch in patch_result.get("patches", []):
         path = patch.get("field_path", "")
         new_val = patch.get("new_value")
-        if path and new_val is not None:
-            _set_nested(v2, path, new_val)
-            logger.info("Patched %s -> %s", path, repr(new_val)[:80])
+        if not path or new_val is None:
+            continue
+        old_val = _get_nested(v2, path)
+        if _is_meaningful(old_val) and old_val != new_val:
+            logger.info(
+                "Conflict resolved [%s]: %s | was: %s -> now: %s",
+                source, path, repr(old_val)[:60], repr(new_val)[:60],
+            )
+        _set_nested(v2, path, new_val)
+        logger.info("Patched [%s] %s -> %s", source, path, repr(new_val)[:80])
 
     existing = v2.get("questions_or_unknowns", [])
     new_unknowns = patch_result.get("questions_or_unknowns", [])
     v2["questions_or_unknowns"] = existing + new_unknowns
 
-    # Merge metadata from patch_result
     if "_metadata" in patch_result:
         if "_metadata" not in v2:
             v2["_metadata"] = {}
@@ -384,25 +409,31 @@ def apply_patches(v1_memo: dict, patch_result: dict) -> dict:
     return v2
 
 _ONBOARDING_FORM_PROMPT = """\
-You are a precise data extraction assistant. Your job is to merge structured onboarding
-form data with an existing v1 account memo (from demo call).
+You are a precise data extraction assistant. Your job is to merge a structured client
+onboarding form with an existing v1 account memo derived from a demo call.
 
 EXISTING V1 MEMO (demo-derived, may have incomplete assumptions):
 \"\"\"
 {v1_memo_json}
 \"\"\"
 
-ONBOARDING FORM DATA (structured JSON from client):
+CLIENT ONBOARDING FORM (authoritative — client-submitted):
 \"\"\"
 {form_data_json}
 \"\"\"
 
+CONFLICT RESOLUTION HIERARCHY (highest to lowest authority):
+  1. Client onboarding form (this document — most authoritative)
+  2. Demo call memo (v1 — preliminary assumptions only)
+
 CRITICAL RULES:
-1. Merge form data with existing memo - form data OVERRIDES demo assumptions.
-2. Detect and flag conflicts between form data and v1 memo.
-3. Preserve fields not mentioned in the form.
-4. Mark form-derived fields with "_source": "onboarding_form" in metadata.
-5. Flag any remaining unknowns.
+1. Form data ALWAYS overrides demo assumptions. The form is the client's authoritative intent.
+2. Detect and explicitly flag every conflict between form data and v1 memo.
+3. Preserve ALL fields from v1 that are NOT mentioned in the form — do not remove them.
+4. Clarify missing demo details: if the form fills in a field that was empty/unknown in v1, mark it "added".
+5. Introduce new constraints: if the form adds fields not in v1, include them as "added" patches.
+6. Mark form-derived fields with "_source": "onboarding_form" in metadata.
+7. Flag any fields in the form that are ambiguous or require manual review.
 
 Return a single valid JSON object with this structure:
 
@@ -413,28 +444,132 @@ Return a single valid JSON object with this structure:
       "field_path": "dot.separated.field.path",
       "old_value": <value from v1 or null if new>,
       "new_value": <value from form>,
-      "reason": "onboarding form update",
-      "change_type": "added|modified|removed|confirmed"
+      "reason": "brief reason: e.g. 'clarifies demo assumption', 'new constraint from client', 'overrides assumed value'",
+      "change_type": "added|modified|removed|confirmed",
+      "source": "onboarding_form"
     }}
   ],
   "conflicts": [
     {{
       "field": "field.path",
-      "v1_value": "...",
-      "form_value": "...",
-      "resolution": "form overrides v1"
+      "v1_value": "value in v1 memo",
+      "form_value": "value in form",
+      "resolution": "form overrides v1 — [brief reason why form value is correct]",
+      "requires_review": false
     }}
   ],
-  "questions_or_unknowns": ["anything still unclear after form merge"],
+  "questions_or_unknowns": ["anything still unclear or requiring manual review after form merge"],
   "_metadata": {{
     "_source": "onboarding_form",
     "_extraction_timestamp": "{timestamp}",
-    "_form_merged": true
+    "_form_merged": true,
+    "_conflict_count": <number of conflicts detected>,
+    "_fields_clarified": <number of previously-empty fields now filled>
   }}
 }}
 
+Change type guidance:
+- "added": form fills a field that was empty/null/[] in v1
+- "modified": form changes an existing non-empty v1 value (ALWAYS flag as conflict too)
+- "removed": form explicitly removes a value (rare)
+- "confirmed": form matches v1 exactly (no change needed — include to show explicit confirmation)
+
 Return ONLY the JSON object, no markdown fences, no explanations.
 """
+
+_RULE_BASED_REASON = "Detected via rule-based onboarding scan"
+
+
+def _make_patch(field_path: str, v1_val: Any, new_val: Any, reason: str) -> dict:
+    return {
+        "field_path": field_path,
+        "old_value": v1_val,
+        "new_value": new_val,
+        "reason": reason,
+        "change_type": "added" if not v1_val else "modified",
+    }
+
+
+def _diff_scalar_fields(rough: dict, v1_memo: dict) -> list[dict]:
+    patches = []
+    for field in ("office_address", "company_name"):
+        v1_val = v1_memo.get(field, "")
+        new_val = rough.get(field, "")
+        if new_val and new_val != v1_val:
+            patches.append(_make_patch(field, v1_val, new_val, _RULE_BASED_REASON))
+    return patches
+
+
+def _diff_business_hours(rough: dict, v1_memo: dict) -> list[dict]:
+    patches = []
+    bh_v1 = v1_memo.get("business_hours", {})
+    bh_new = rough.get("business_hours", {})
+    for sub in ("days", "start", "end", "timezone"):
+        v1_val = bh_v1.get(sub)
+        new_val = bh_new.get(sub)
+        if new_val and new_val != v1_val:
+            patches.append(_make_patch(f"business_hours.{sub}", v1_val, new_val, _RULE_BASED_REASON))
+    return patches
+
+
+def _diff_emergency_data(rough: dict, v1_memo: dict) -> list[dict]:
+    patches = []
+    er_v1 = v1_memo.get("emergency_routing_rules", {})
+    er_new = rough.get("emergency_routing_rules", {})
+    new_contacts = er_new.get("contacts", [])
+    if new_contacts and new_contacts != er_v1.get("contacts", []):
+        patches.append({
+            "field_path": "emergency_routing_rules.contacts",
+            "old_value": er_v1.get("contacts", []),
+            "new_value": new_contacts,
+            "reason": "Phone numbers detected in onboarding transcript",
+            "change_type": "modified",
+        })
+    new_triggers = rough.get("emergency_definition", [])
+    if new_triggers and new_triggers != v1_memo.get("emergency_definition", []):
+        patches.append({
+            "field_path": "emergency_definition",
+            "old_value": v1_memo.get("emergency_definition", []),
+            "new_value": new_triggers,
+            "reason": "Emergency triggers detected in onboarding transcript",
+            "change_type": "modified",
+        })
+    return patches
+
+
+def _merge_form_recursive(
+    form: dict,
+    base: dict,
+    path: str,
+    patches: list[dict],
+    conflicts: list[dict],
+) -> None:
+    for key, form_val in form.items():
+        if key.startswith("_"):
+            continue
+        current_path = f"{path}.{key}" if path else key
+        if key not in base:
+            base[key] = form_val
+            patches.append({
+                "field_path": current_path,
+                "old_value": None,
+                "new_value": form_val,
+                "reason": "onboarding form - new field",
+                "change_type": "added",
+            })
+        elif isinstance(form_val, dict) and isinstance(base[key], dict):
+            _merge_form_recursive(form_val, base[key], current_path, patches, conflicts)
+        elif base[key] != form_val:
+            conflicts.append({"field": current_path, "v1_value": base[key], "form_value": form_val, "resolution": "form overrides v1"})
+            patches.append({
+                "field_path": current_path,
+                "old_value": base[key],
+                "new_value": form_val,
+                "reason": "onboarding form - override",
+                "change_type": "modified",
+            })
+            base[key] = form_val
+
 
 def _llm_merge_form(form_data: dict, v1_memo: dict) -> dict:
     timestamp = datetime.now(timezone.utc).isoformat()
@@ -447,16 +582,6 @@ def _llm_merge_form(form_data: dict, v1_memo: dict) -> dict:
     return call_llm_json(prompt)
 
 def merge_onboarding_form(form_data: dict, v1_memo: dict) -> dict:
-    """
-    Merge structured onboarding form data with existing v1 memo.
-    
-    Args:
-        form_data: Structured JSON from onboarding form
-        v1_memo: Existing v1 account memo from demo call
-    
-    Returns:
-        Updated memo with form data merged, conflicts flagged
-    """
     account_id = v1_memo.get("account_id", "unknown")
     
     if GEMINI_API_KEY:
@@ -466,46 +591,11 @@ def merge_onboarding_form(form_data: dict, v1_memo: dict) -> dict:
         except Exception as exc:
             logger.warning("LLM form merge failed (%s); falling back to direct merge.", exc)
     
-    # Fallback: direct merge with conflict detection
     import copy
     result = copy.deepcopy(v1_memo)
-    conflicts = []
-    patches = []
-    
-    def merge_recursive(form: dict, base: dict, path: str = ""):
-        for key, form_val in form.items():
-            if key.startswith("_"):
-                continue
-            current_path = f"{path}.{key}" if path else key
-            
-            if key not in base:
-                base[key] = form_val
-                patches.append({
-                    "field_path": current_path,
-                    "old_value": None,
-                    "new_value": form_val,
-                    "reason": "onboarding form - new field",
-                    "change_type": "added"
-                })
-            elif isinstance(form_val, dict) and isinstance(base[key], dict):
-                merge_recursive(form_val, base[key], current_path)
-            elif base[key] != form_val:
-                conflicts.append({
-                    "field": current_path,
-                    "v1_value": base[key],
-                    "form_value": form_val,
-                    "resolution": "form overrides v1"
-                })
-                patches.append({
-                    "field_path": current_path,
-                    "old_value": base[key],
-                    "new_value": form_val,
-                    "reason": "onboarding form - override",
-                    "change_type": "modified"
-                })
-                base[key] = form_val
-    
-    merge_recursive(form_data, result)
+    conflicts: list[dict] = []
+    patches: list[dict] = []
+    _merge_form_recursive(form_data, result, "", patches, conflicts)
     
     return {
         "account_id": account_id,
@@ -531,6 +621,34 @@ def extract_memo(transcript: str, account_id: str) -> dict:
     logger.info("Extracting memo via rule-based fallback for %s", account_id)
     return _rule_based_extract(transcript, account_id)
 
+def _rule_based_onboarding_diff(transcript: str, v1_memo: dict) -> dict:
+    account_id = v1_memo.get("account_id", "unknown")
+    rough = _rule_based_extract(transcript, account_id)
+    patches = (
+        _diff_scalar_fields(rough, v1_memo)
+        + _diff_business_hours(rough, v1_memo)
+        + _diff_emergency_data(rough, v1_memo)
+    )
+
+    return {
+        "account_id": account_id,
+        "patches": patches,
+        "questions_or_unknowns": [
+            "Rule-based onboarding extraction used - set GEMINI_API_KEY for precise diff.",
+            "Manual review recommended: routing logic, integration constraints, and "
+            "transfer timeouts may not be captured.",
+        ],
+        "_metadata": {
+            "_source": "onboarding",
+            "_extraction_timestamp": datetime.now(timezone.utc).isoformat(),
+            "_confidence_flags": {
+                "is_rule_based": True,
+                "may_miss_config_details": True,
+            },
+        },
+    }
+
+
 def extract_onboarding_updates(transcript: str, v1_memo: dict) -> dict:
     account_id = v1_memo.get("account_id", "unknown")
     if GEMINI_API_KEY:
@@ -538,16 +656,9 @@ def extract_onboarding_updates(transcript: str, v1_memo: dict) -> dict:
             logger.info("Extracting onboarding updates via LLM for %s", account_id)
             return _llm_extract_updates(transcript, v1_memo)
         except Exception as exc:
-            logger.warning("LLM update extraction failed (%s).", exc)
+            logger.warning("LLM update extraction failed (%s); falling back to rule-based.", exc)
 
     logger.warning(
-        "Rule-based onboarding update extraction not supported. "
-        "Set GEMINI_API_KEY for onboarding diff extraction."
+        "No GEMINI_API_KEY set - using rule-based onboarding diff for %s.", account_id
     )
-    return {
-        "account_id": account_id,
-        "patches": [],
-        "questions_or_unknowns": [
-            "Onboarding LLM extraction unavailable - set GEMINI_API_KEY."
-        ],
-    }
+    return _rule_based_onboarding_diff(transcript, v1_memo)

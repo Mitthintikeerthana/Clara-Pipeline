@@ -13,6 +13,9 @@ OUTPUTS_DIR = PROJECT_ROOT / "outputs" / "accounts"
 LOGS_DIR = PROJECT_ROOT / "logs"
 DASHBOARD_DIR = Path(__file__).parent
 
+_MEMO_FILE = "memo.json"
+_META_FILE = "pipeline_meta.json"
+
 def _load_json(path: Path) -> dict | list | None:
     if path.exists():
         try:
@@ -30,13 +33,16 @@ def _accounts_api() -> list[dict]:
             continue
         account_id = account_dir.name
         versions = sorted(p.name for p in account_dir.iterdir() if p.is_dir())
-        v1_memo = _load_json(account_dir / "v1" / "memo.json") or {}
-        v2_memo = _load_json(account_dir / "v2" / "memo.json")
+        v1_memo = _load_json(account_dir / "v1" / _MEMO_FILE) or {}
+        v1_meta = _load_json(account_dir / "v1" / _META_FILE) or {}
+        v2_meta = _load_json(account_dir / "v2" / _META_FILE) or {}
+        lifecycle_stage = v2_meta.get("lifecycle_stage") or v1_meta.get("lifecycle_stage")
         accounts.append({
             "account_id": account_id,
             "company_name": v1_memo.get("company_name", account_id),
             "versions": versions,
             "has_v2": "v2" in versions,
+            "lifecycle_stage": lifecycle_stage,
         })
     return accounts
 
@@ -45,21 +51,27 @@ def _account_api(account_id: str) -> dict:
     if not base.exists():
         return {"error": f"Account '{account_id}' not found"}
 
-    v1_memo = _load_json(base / "v1" / "memo.json")
+    v1_memo = _load_json(base / "v1" / _MEMO_FILE)
     v1_spec = _load_json(base / "v1" / "agent_spec.json")
     v1_prompt_path = base / "v1" / "agent_prompt.txt"
     v1_prompt = v1_prompt_path.read_text(encoding="utf-8") if v1_prompt_path.exists() else None
+    v1_meta = _load_json(base / "v1" / _META_FILE) or {}
 
-    v2_memo = _load_json(base / "v2" / "memo.json")
+    v2_memo = _load_json(base / "v2" / _MEMO_FILE)
     v2_spec = _load_json(base / "v2" / "agent_spec.json")
     v2_prompt_path = base / "v2" / "agent_prompt.txt"
     v2_prompt = v2_prompt_path.read_text(encoding="utf-8") if v2_prompt_path.exists() else None
     v2_changelog = _load_json(base / "v2" / "changelog.json")
     v2_changelog_md_path = base / "v2" / "changelog.md"
     v2_changelog_md = v2_changelog_md_path.read_text(encoding="utf-8") if v2_changelog_md_path.exists() else None
+    v2_meta = _load_json(base / "v2" / _META_FILE) or {}
+    v2_form_patch = _load_json(base / "v2" / "form_patch_result.json")
+
+    lifecycle_stage = v2_meta.get("lifecycle_stage") or v1_meta.get("lifecycle_stage")
 
     return {
         "account_id": account_id,
+        "lifecycle_stage": lifecycle_stage,
         "v1": {
             "memo": v1_memo,
             "agent_spec": v1_spec,
@@ -71,6 +83,7 @@ def _account_api(account_id: str) -> dict:
             "system_prompt": v2_prompt,
             "changelog": v2_changelog,
             "changelog_md": v2_changelog_md,
+            "form_patch": v2_form_patch,
         } if v2_memo else None,
     }
 
@@ -81,7 +94,7 @@ def _summary_api() -> dict:
     return summary
 
 class Handler(BaseHTTPRequestHandler):
-    def log_message(self, format, *args):
+    def log_message(self, format, *args):  # noqa: A002 — suppress default HTTP access log output
         pass
 
     def _send_json(self, data: dict | list, status: int = 200) -> None:
@@ -127,9 +140,9 @@ class Handler(BaseHTTPRequestHandler):
 
 def main(port: int = 8080) -> None:
     server = HTTPServer(("0.0.0.0", port), Handler)
-    print(f"  Clara Pipeline Dashboard")
+    print("  Clara Pipeline Dashboard")
     print(f"  Running at: http://localhost:{port}")
-    print(f"  Press Ctrl+C to stop.\n")
+    print("  Press Ctrl+C to stop.\n")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

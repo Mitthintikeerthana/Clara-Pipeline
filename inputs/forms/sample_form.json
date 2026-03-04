@@ -1,0 +1,75 @@
+{
+  "_form_schema_version": "1.0",
+  "_description": "Clara Answers - Client Onboarding Form. Fill all fields that apply. Leave unknown fields as null or empty string.",
+  "_account_id": "REPLACE_WITH_ACCOUNT_ID",
+
+  "company_name": "Acme Fire Protection",
+  "office_address": "123 Main Street, Phoenix AZ 85001",
+
+  "business_hours": {
+    "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+    "start": "08:00",
+    "end": "17:00",
+    "timezone": "America/Phoenix"
+  },
+
+  "call_transfer_rules": {
+    "during_hours_primary": "+1-555-000-0000",
+    "timeout_seconds": 60,
+    "timeout_rings": null,
+    "retries": 2,
+    "on_transfer_fail": "Take voicemail and promise callback within 1 hour",
+    "notify_dispatch_on_fail": false
+  },
+
+  "emergency_routing_rules": {
+    "contacts": [
+      {"name": "On-Call Technician", "phone": "+1-555-000-0001", "order": 1},
+      {"name": "Operations Manager", "phone": "+1-555-000-0002", "order": 2}
+    ],
+    "fallback": "If all contacts unreachable, advise caller of 15-minute callback and log the call"
+  },
+
+  "emergency_definition": [
+    "active fire alarm activation",
+    "sprinkler head discharge",
+    "gas leak or smell of gas",
+    "loss of heat in freezing temperatures",
+    "complete system failure",
+    "carbon monoxide alarm"
+  ],
+
+  "integration_constraints": [
+    "Do not create jobs in ServiceTrade for non-emergency after-hours calls",
+    "All inspection scheduling must go through the office during business hours"
+  ],
+
+  "special_constraints": [
+    "All emergency sprinkler calls must go directly to the phone tree without pre-collection",
+    "Non-emergency extinguisher service calls can be collected after hours without transfer",
+    "Never transfer residential calls - take message only",
+    "If transfer fails after configured timeout, dispatch coordinator must be notified"
+  ],
+
+  "services_supported": [
+    "Fire protection",
+    "Sprinkler systems",
+    "Fire alarm monitoring",
+    "Extinguisher service",
+    "Backflow prevention"
+  ],
+
+  "services_excluded": [
+    "Plumbing (unrelated to fire suppression)",
+    "HVAC",
+    "Electrical (non-fire-related)",
+    "Security cameras"
+  ],
+
+  "non_emergency_routing_rules": {
+    "after_hours": "Collect name, number, service address, and issue description. Promise next business day callback.",
+    "during_hours": "Transfer to main office line. If no answer, take message."
+  },
+
+  "notes": "Client prefers all voicemails to be emailed to dispatch@acmefire.com. Do not give out technician cell numbers directly."
+}
